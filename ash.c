@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <sys/types.h>
@@ -46,6 +47,8 @@ static void execute(const char *p, char *const argv[])
 
 static int command(int argc, const char **argv)
 {
+    int n = 0;
+
     if (argc > 1)
         for (size_t i = 1; i < argc; ++i){
             const char *s = argv[i];
@@ -53,10 +56,24 @@ static int command(int argc, const char **argv)
                 const char *var = ash_var_get_value( ash_find_var(s) );
                 if(var)
                     argv[i] = var;
-                else
+                else {
                     argv[i] = "\0";
+                    ++n;
+                }
             }
         }
+
+    if (n > 0){
+        int pos = 0;
+
+        for (size_t i = 1; i < argc; ++i){
+            if (!(argv[i][0]))
+                ++pos;
+            else
+                argv[i - pos] = argv[i];
+        }
+        argc -= n;
+    }
 
     const char *v = argv[0];
     if (*(v++) == '$') {
@@ -102,11 +119,18 @@ static void scan(void)
         if (!argc)
             return;
         command(argc, (const char **)argv);
-    }
+    } else
+        ash_exit();
+}
+
+void ash_exit(void)
+{
+    exit(0);
 }
 
 static void ash_main(int argc, const char **pargs)
 {
+    ash_io_init();
     ash_env_init();
 
     for (;;)
