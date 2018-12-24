@@ -3,6 +3,7 @@
 */
 
 #include <errno.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,6 +15,27 @@
 #define MAX_BUFFER_SIZE 16384
 
 static char buf[MIN_BUFFER_SIZE];
+
+static void ash_io_handle(int sig)
+{
+    switch (sig){
+        case SIGQUIT:
+        case SIGTSTP:
+        case SIGINT:
+            break;
+    }
+}
+
+static void ash_io_signal(void)
+{
+    struct sigaction act;
+    act.sa_handler = ash_io_handle;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = SA_RESTART;
+    sigaction(SIGINT,  &act, NULL);
+    sigaction(SIGQUIT, &act, NULL);
+    sigaction(SIGTSTP, &act, NULL);
+}
 
 char *ash_scan(void)
 {
@@ -51,6 +73,10 @@ void ash_print_err_builtin(const char *pname, const char *msg)
     fprintf(stdout, PNAME " %s: error: %s \n", pname, msg);
 }
 
+void ash_io_init(void)
+{
+    ash_io_signal();
+}
 
 const char *perr(int msg)
 {
