@@ -6,8 +6,9 @@
 #define ASH_ASH
 
 #define PNAME "ash"
-#define VERSION "0.0.3"
+#define VERSION "0.0.4"
 
 extern void ash_print_help(void);
+extern void ash_exit(void);
 
 #endif
