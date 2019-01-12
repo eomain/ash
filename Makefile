@@ -1,24 +1,18 @@
 
-BIN = bin
-CFLAGS := -I include
+# ash (acorn shell) - 2018
 
-OBJS = ash.o io.o env.o var.o builtin.o
+BIN = bin
+
+OBJS = ash.o io.o env.o var.o builtin.o \
+	   lang.o mem.o script.o exec.o echo.o \
+	   cd.o sleep.o unset.o
 
 ash: $(OBJS)
-	-@mkdir $(BIN)
+	-@mkdir -p $(BIN)
 	$(CC) $(CFLAGS) $(OBJS) -o $(BIN)/$@
 
 %.o:%.c
-	$(CC) -c $(CFLAGS) $< -o $@
-
-install: ash
-	@cp ash $(INSTALL_DIR)
-	-@echo "ash: successfully installed"
-	-@echo "type 'ash' to start a new shell session"
-
-uninstall:
-	@rm $(INSTALL_DIR)/ash
-	-@echo "ash: successfully uninstalled"
+	$(CC) -c $(CFLAGS) -I include $< -o $@
 
 clean:
 	-@rm -r $(BIN) $(OBJS)
