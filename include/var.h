@@ -1,6 +1,17 @@
 /* Copyright 2018 eomain
    this program is licensed under the 2-clause BSD license
-   see LICENSE for the full license info
+   see COPYING for the full license info
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #ifndef ASH_VAR
@@ -30,7 +41,7 @@ extern int ash_var_check_nil(struct ash_var *);
 
 extern void ash_vars_init(void);
 extern struct ash_var *ash_var_find_builtin(int);
-extern struct ash_var *ash_find_var(const char *);
+extern struct ash_var *ash_var_find(const char *);
 extern void ash_var_set_builtin(int, const char *);
 extern const char *ash_var_get_value(struct ash_var *);
 extern struct ash_var *ash_var_set(const unsigned char *, const char *, int);

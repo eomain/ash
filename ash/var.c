@@ -1,6 +1,17 @@
 /* Copyright 2018 eomain
    this program is licensed under the 2-clause BSD license
-   see LICENSE for the full license info
+   see COPYING for the full license info
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
@@ -191,7 +202,7 @@ struct ash_var *ash_var_find_builtin(int o)
     return NULL;
 }
 
-struct ash_var *ash_find_var(const char *s)
+struct ash_var *ash_var_find(const char *s)
 {
     const char *v = s;
     switch(v[0]){
@@ -531,17 +542,19 @@ static struct ash_var *ash_var_env_local(const char *name, int index)
 
 struct ash_var *ash_var_env_get(const unsigned char *key)
 {
-    char c;
-    const char *s = key;
-    int o = 1;
-    while ((c = *(s++))){
-        if (!(c >= '0' && c <= '9'))
-            o = 0;
-    }
+    if (ash_env){
+        char c;
+        const char *s = key;
+        int o = 1;
+        while ((c = *(s++))){
+            if (!(c >= '0' && c <= '9'))
+                o = 0;
+        }
 
-    if (o == 1){
-        int index = atoi(key);
-        return ash_var_env_local(key, index - 1);
+        if (o == 1){
+            int index = atoi(key);
+            return ash_var_env_local(key, index - 1);
+        }
     }
 
     size_t hash = ash_compute_hash(key);
@@ -552,7 +565,7 @@ struct ash_var *ash_var_env_get(const unsigned char *key)
             return var;
     }
 
-    return ash_var_get(key);
+    return ash_var_find(key);
 }
 
 void ash_vars_init(void)
