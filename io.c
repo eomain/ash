@@ -1,4 +1,5 @@
-/* Copyright 2018 eomain - this program is licensed under the 2-clause BSD license
+/* Copyright 2018 eomain
+   this program is licensed under the 2-clause BSD license
    see LICENSE for the full license info
 */
 
@@ -10,20 +11,49 @@
 
 #include "ash.h"
 #include "io.h"
+#include "mem.h"
 
 #define MIN_BUFFER_SIZE 2096
 #define MAX_BUFFER_SIZE 16384
+
+static int ash_errno = ASH_ERRNO;
+
+void ash_set_errno(int err)
+{
+    ash_errno = err;
+}
+
+const char *ash_open(const char *name)
+{
+    FILE *fp;
+    fp = fopen(name, "r");
+    if (fp != NULL){
+        fseek(fp, 0, SEEK_END);
+        size_t len = ftell(fp);
+        rewind(fp);
+        char *buf = ash_alloc(len + 1 * sizeof (char));
+        if(!buf)
+            ash_print_errno(name);
+        else {
+            if (fread(buf, sizeof (char), len, fp) != len)
+                ash_print_errno(name);
+            else
+                return buf;
+        }
+        fclose(fp);
+    } else
+        ash_print_errno(name);
+
+    return NULL;
+}
 
 static char buf[MIN_BUFFER_SIZE];
 
 static void ash_io_handle(int sig)
 {
-    switch (sig){
-        case SIGQUIT:
-        case SIGTSTP:
-        case SIGINT:
-            break;
-    }
+    /* todo */
+    if (sig == SIGQUIT || sig == SIGTSTP || sig == SIGINT)
+        return;
 }
 
 static void ash_io_signal(void)
@@ -40,7 +70,7 @@ static void ash_io_signal(void)
 char *ash_scan(void)
 {
     memset(buf, 0, MIN_BUFFER_SIZE);
-    if(fgets(buf, MIN_BUFFER_SIZE, stdin))
+    if (fgets(buf, MIN_BUFFER_SIZE, stdin))
         return buf;
     return NULL;
 }
@@ -53,24 +83,34 @@ void ash_print(const char *fmt, ...)
     va_end(ap);
 }
 
+void ash_puts(const char *s)
+{
+    ash_print("%s\n", s);
+}
+
+void ash_putchar(char c)
+{
+    ash_print("%c", c);
+}
+
 void ash_print_msg(const char *msg)
 {
-    fprintf(stdout, PNAME " %s\n", msg);
+    ash_print(PNAME " %s\n", msg);
 }
 
 void ash_print_err(const char *msg)
 {
-    fprintf(stdout, PNAME ": error: %s\n", msg);
+    ash_print(PNAME ": error: %s\n", msg);
 }
 
 void ash_print_errno(const char *msg)
 {
-    fprintf(stdout, PNAME ": error: %s: %s\n", msg, strerror(errno));
+    ash_print(PNAME ": error: %s: %s\n", msg, strerror(errno));
 }
 
 void ash_print_err_builtin(const char *pname, const char *msg)
 {
-    fprintf(stdout, PNAME " %s: error: %s \n", pname, msg);
+    ash_print(PNAME " %s: error: %s \n", pname, msg);
 }
 
 void ash_io_init(void)
@@ -78,14 +118,20 @@ void ash_io_init(void)
     ash_io_signal();
 }
 
+const char *ash_merr[ ASH_ERR_NO ] = {
+    [ ARG_MSG_ERR ]     = "expected argument",
+    [ TYPE_ERR ]        = "incorrect value type",
+    [ RODATA_ERR ]      = "read-only data",
+    [ PARSE_ERR ]       = "parsed with errors",
+    [ UREG_CMD_ERR ]    = "unrecognized command",
+    [ SIG_MSG_ERR ]     = "abnormal termination"
+};
+
 const char *perr(int msg)
 {
-    switch (msg){
-        case ARG_MSG_ERR:     return "expected argument";
-        case TYPE_ERR:        return "incorrect value type";
-        case PARSE_ERR:       return "parsed with errors";
-        case UREG_CMD_ERR:    return "unrecognized command";
-        case SIG_MSG_ERR:     return "abnormal termination";
-        default:              return "internal error";
-    }
+    if (msg == ASH_ERRNO)
+        msg = ash_errno;
+    if (msg < ASH_ERR_NO)
+        return ash_merr[msg];
+    return "internal error";
 }
