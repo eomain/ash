@@ -1,125 +1,166 @@
-/* Copyright 2018 eomain - this program is licensed under the 2-clause BSD license
+/* Copyright 2018 eomain
+   this program is licensed under the 2-clause BSD license
    see LICENSE for the full license info
 */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __unix__
-    #include <unistd.h>
-#endif
-
 #include "ash.h"
 #include "builtin.h"
+#include "cd.h"
+#include "echo.h"
 #include "env.h"
+#include "exec.h"
 #include "io.h"
+#include "sleep.h"
+#include "unset.h"
 #include "var.h"
 
-static void ash_print_builtin(void);
-static void ash_print_builtin_info(int o, const char *s);
+static const char *builtin_msg[] = {
+    [  ASH_BUILTIN_BUILTIN ]    =   "list built-in commands",
+    [  ASH_BUILTIN_EXIT    ]    =   "exit shell session",
+    [  ASH_BUILTIN_HELP    ]    =   "display help prompt"
+};
 
-static void ash_builtin(int argc, const char * const *argv)
+static const char *ash_builtin_usage(void)
+{
+    return builtin_msg[ASH_BUILTIN_BUILTIN];
+}
+
+static const char *ash_exit_usage(void)
+{
+    return builtin_msg[ASH_BUILTIN_EXIT];
+}
+
+static const char *ash_help_usage(void)
+{
+    return builtin_msg[ASH_BUILTIN_HELP];
+}
+
+static void ash_print_builtin(void);
+static void ash_print_builtin_info(int, const char *);
+
+static int ash_builtin(int argc, const char * const *argv)
 {
     int status;
 
     if (argc == 1)
         ash_print_builtin();
     else {
-        if ((status = ash_find_builtin(argv[1])) != -1)
+        if ((status = ash_builtin_find(argv[1])) != -1)
             ash_print_builtin_info(status, argv[1]);
         else
             ash_print_err_builtin(argv[1], perr(UREG_CMD_ERR));
     }
+    return 0;
 }
 
-static void ash_echo(int argc, const char * const *argv)
+static int ash_exit(int argc, const char * const *argv)
 {
-    if(argc > 1){
-        for (size_t i = 1; i < argc -1; ++i)
-            ash_print("%s ", argv[i]);
-        ash_print("%s\n", argv[argc -1]);
-    }
+    ash_puts(argv[0]);
+    ash_logout();
+    return 0;
 }
 
-static void ash_sleep(int argc, const char * const *argv)
+static int ash_help(int argc, const char * const *argv)
 {
-    int status;
-
-    if(argc == 1)
-        ash_print_err_builtin(argv[0], perr(ARG_MSG_ERR));
-    else {
-        status = 1;
-        for (size_t i = 0; i < strlen(argv[1]); ++i){
-            char c = argv[1][i];
-            if (!(c <= '9' && c >= '0'))
-                status = 0;
-        }
-        if (status)
-            sleep(atoi(argv[1]));
-        else
-            ash_print_err_builtin(argv[0], perr(TYPE_ERR));
-    }
+    ash_print_help();
+    return 0;
 }
 
-static void ash_cd(int argc, const char * const *argv)
-{
-    int status;
-
-    if (argc > 1){
-        const char *s = argv[1];
-        size_t max = ash_env_get_pwd_max();
-        char home_dir[max];
-        if (*s == '~'){
-            const char *v = s;
-            if (v[1] == '/')
-                ++v;
-            memset(home_dir, 0, max);
-            sprintf(home_dir, "%s%c%s", ash_env_get_home(), '/', ++v);
-            s = home_dir;
-        }
-        status = chdir(s);
-        if (status)
-            ash_print_err_builtin(argv[0], strerror(errno));
-        else
-            ash_env_pwd();
-    }
+struct {
+    int builtin;
+    const char *name;
+    int (*main) (int, const char * const *);
+    const char *(*usage) (void);
 }
+
+static usage[ ASH_BUILTIN_NO ] = {
+
+    [ ASH_BUILTIN_ASSERT ] = {
+        .builtin = ASH_BUILTIN_ASSERT,
+        .name    = "assert",
+        .main    = NULL,
+        .usage   = NULL
+    },
+
+    [ ASH_BUILTIN_BUILTIN ] = {
+        .builtin = ASH_BUILTIN_BUILTIN,
+        .name    = "builtin",
+        .main    = ash_builtin,
+        .usage   = ash_builtin_usage
+    },
+
+    [ ASH_BUILTIN_CD ] = {
+        .builtin = ASH_BUILTIN_CD,
+        .name    = "cd",
+        .main    = ash_cd,
+        .usage   = ash_cd_usage
+    },
+
+    [ ASH_BUILTIN_ECHO ] = {
+        .builtin = ASH_BUILTIN_ECHO,
+        .name    = "echo",
+        .main    = ash_echo,
+        .usage   = ash_echo_usage
+    },
+
+    [ ASH_BUILTIN_EXIT ] = {
+        .builtin = ASH_BUILTIN_EXIT,
+        .name    = "exit",
+        .main    = ash_exit,
+        .usage   = ash_exit_usage
+    },
+
+    [ ASH_BUILTIN_EXPORT ] = {
+        .builtin = ASH_BUILTIN_EXPORT,
+        .name    = "export",
+        .main    = NULL,
+        .usage   = NULL
+    },
+
+    [ ASH_BUILTIN_HELP ] = {
+        .builtin = ASH_BUILTIN_HELP,
+        .name    = "help",
+        .main    = ash_help,
+        .usage   = ash_help_usage
+    },
+
+    [ ASH_BUILTIN_HISTORY ] = {
+        .builtin = ASH_BUILTIN_HISTORY,
+        .name    = "history",
+        .main    = NULL,
+        .usage   = NULL
+    },
+
+    [ ASH_BUILTIN_SLEEP ] = {
+        .builtin = ASH_BUILTIN_SLEEP,
+        .name    = "sleep",
+        .main    = ash_sleep,
+        .usage   = ash_sleep_usage
+    },
+
+    [ ASH_BUILTIN_UNSET ] = {
+        .builtin = ASH_BUILTIN_UNSET,
+        .name    = "unset",
+        .main    = ash_unset,
+        .usage   = ash_unset_usage
+    }
+
+};
 
 void ash_builtin_exec(int o, int argc, const char * const *argv)
 {
-    switch (o){
-        case BUILTIN:
-            ash_builtin(argc, argv);
-            break;
-
-        case EXIT:
-            exit(0);
-            break;
-
-        case EXPORT:
-            break;
-
-        case ECHO:
-            ash_echo(argc, argv);
-            break;
-
-        case SLEEP:
-            ash_sleep(argc, argv);
-            break;
-
-        case CD:
-            ash_cd(argc, argv);
-            break;
-
-        case HELP:
-            ash_print_help();
-            break;
-    }
+    assert( o < ASH_BUILTIN_NO );
+    int status = usage[o].main(argc, argv);
+    ash_exec_set_exit(status);
 }
 
-int ash_find_builtin(const char *v)
+int ash_builtin_find(const char *v)
 {
     switch (v[0]){
         case 'b':
@@ -130,31 +171,31 @@ int ash_find_builtin(const char *v)
                 v[5] == 'i' &&
                 v[6] == 'n' &&
                 !(v[7]))
-                return BUILTIN;
+                return ASH_BUILTIN_BUILTIN;
             break;
         case 'c':
             if (v[1] == 'd' &&
                 !(v[2]))
-                return CD;
+                return ASH_BUILTIN_CD;
             break;
         case 'e':
             if (v[1] == 'x' &&
                 v[2] == 'i' &&
                 v[3] == 't' &&
                 !(v[4]))
-                return EXIT;
+                return ASH_BUILTIN_EXIT;
             else if (v[1] == 'c' &&
                      v[2] == 'h' &&
                      v[3] == 'o' &&
                      !(v[4]))
-                return ECHO;
+                return ASH_BUILTIN_ECHO;
             break;
         case 'h':
             if (v[1] == 'e' &&
                 v[2] == 'l' &&
                 v[3] == 'p' &&
                 !(v[4]))
-                return HELP;
+                return ASH_BUILTIN_HELP;
             break;
         case 's':
             if (v[1] == 'l' &&
@@ -162,50 +203,34 @@ int ash_find_builtin(const char *v)
                 v[3] == 'e' &&
                 v[4] == 'p' &&
                 !(v[5]))
-                return SLEEP;
+                return ASH_BUILTIN_SLEEP;
             break;
+
+        case 'u':
+            if (v[1] == 'n' &&
+                v[2] == 's' &&
+                v[3] == 'e' &&
+                v[4] == 't' &&
+                !v[5])
+                return ASH_BUILTIN_UNSET;
     }
     return -1;
 }
 
 static void ash_print_builtin_info(int o, const char *s)
 {
-    ash_print( PNAME ": command: ");
-    switch (o){
-        case BUILTIN:
-            ash_print("%s :: list builtin commands\n", s);
-            break;
-
-        case CD:
-            ash_print("%s [dir] :: change directory\n", s);
-            break;
-
-        case ECHO:
-            ash_print("%s :: print to stdout\n", s);
-            break;
-
-        case EXIT:
-            ash_print("%s :: exit shell session\n", s);
-            break;
-
-        case HELP:
-            ash_print("%s :: show usage info\n", s);
-            break;
-
-        case SLEEP:
-            ash_print("%s [sec] :: sleep for [sec] seconds\n", s);
-            break;
-    }
+    assert( o < ASH_BUILTIN_NO );
+    if (usage[o].usage)
+        ash_print("%s :: %s\n", usage[o].name, usage[o].usage());
 }
 
 static void ash_print_builtin(void)
 {
-    ash_print("list of builtin commands:\n");
-    ash_print("type builtin [command] for more info\n\n");
-    ash_print("builtin\n");
-    ash_print("cd\n");
-    ash_print("echo\n");
-    ash_print("exit\n");
-    ash_print("help\n");
-    ash_print("sleep\n");
+    ash_puts("built-in commands:");
+    ash_puts("type builtin [command] for more info\n");
+    for (size_t i = 0; i < ASH_BUILTIN_NO; ++i){
+        if (!usage[i].usage)
+            continue;
+        ash_print("%s     \t\t:: %s\n", usage[i].name, usage[i].usage());
+    }
 }
