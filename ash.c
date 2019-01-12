@@ -1,162 +1,150 @@
-/* Copyright 2018 eomain - this program is licensed under the 2-clause BSD license
+/* Copyright 2018 eomain
+   this program is licensed under the 2-clause BSD license
    see LICENSE for the full license info
 */
 
-#include <ctype.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-
 #include "ash.h"
-#include "builtin.h"
 #include "env.h"
 #include "io.h"
+#include "lang.h"
+#include "script.h"
 #include "var.h"
 
-#define DEFAULT_HISTORY_SIZE 500
-#define MIN_BUFFER_SIZE 2096
-#define MAX_BUFFER_SIZE 16384
-#define MAX_ARGV 255
+#define ASH_MAX_FAIL 3
+#define ASH_ARG_LEN  5
 
-static void execute(const char *p, char *const argv[])
+/* set if login shell */
+static int ash_login;
+
+/* start shell session after loading a script */
+static int ash_interact;
+
+/* number of script arguments */
+static char ash_nargs[ASH_ARG_LEN] = { 0 };
+
+static void ash_set_args(int argc)
 {
-    pid_t pid;
-    int status;
+    sprintf(ash_nargs, "%ld", argc);
+    ash_var_set("@", ash_nargs, ASH_STATIC);
+}
 
-    pid = fork();
-    if (pid == -1)
-        ash_print_errno(argv[0]);
-    else if (pid == 0){
-        if (execvp(p, argv) == -1)
-            ash_print_errno(argv[0]);
-        _exit(0);
-    }
-    else {
-        wait(&status);
-        if (WIFSIGNALED(status)){
-            ash_print_err_builtin(argv[0], perr(SIG_MSG_ERR));
-            fprintf(stderr, "%s: exit status: %d\n", argv[0], WTERMSIG(status));
+/* ash status used as exit status */
+static int e_stat = 0;
+
+/* set ash exit status */
+void ash_set_status(int status)
+{
+    e_stat = status;
+}
+
+/* ash main display prompt and read input */
+static void ash_main(int argc, const char **argv)
+{
+    /* init io buffers */
+    ash_io_init();
+
+    char *buf;
+
+    /* amount of failed attempts */
+    int fcount = 0;
+
+    /* read and evaluate input */
+    for (;;){
+        ash_prompt();
+        if ((buf = ash_scan())){
+            ash_lang_eval(buf);
+        } else {
+            ash_print_err("failed to scan input!");
+            fcount++;
+            if (fcount == ASH_MAX_FAIL)
+                ash_abort(NULL);
         }
     }
 }
 
-static int command(int argc, const char **argv)
+/* print the current ash version */
+static void ash_print_version(void)
 {
-    int n = 0;
+    ash_print_msg( ASH_VERSION );
+}
 
-    if (argc > 1)
-        for (size_t i = 1; i < argc; ++i){
-            const char *s = argv[i];
-            if (*(s++) == '$'){
-                const char *var = ash_var_get_value( ash_find_var(s) );
-                if(var)
-                    argv[i] = var;
-                else {
-                    argv[i] = "\0";
-                    ++n;
+/* logout of ash session */
+void ash_logout(void)
+{
+    exit(e_stat);
+}
+
+void ash_abort(const char *e_msg)
+{
+    if (!e_msg)
+        e_msg = "cannot continue!";
+    ash_set_status(EXIT_FAILURE);
+    ash_print("(abort) [%d] %s \n", e_stat, e_msg);
+    ash_logout();
+}
+
+/* parse all supplied command line arguments */
+static int ash_option(int argc, const char **argv)
+{
+    for (size_t i = 0; i < argc; i++){
+        if (argv[i][0] == '-') {
+            if (!argv[i][1]){
+                ash_print_err("no option specified");
+                return -1;
+            }
+
+            if (argv[i][1] == '-'){
+                const char *s = &argv[i][2];
+                if (!(*s))
+                    ash_print_err("no option specified");
+
+                if (!strcmp(s, "help"))
+                    ash_print_help();
+                else if (!strcmp(s, "version"))
+                    ash_print_version();
+                return -1;
+
+            } else {
+                size_t len = strlen(&argv[i][1]);
+
+                if (len == 1){
+                    char c = argv[i][1];
+
+                    if (c == 'i')
+                        ash_interact = 1;
+                    else if (c == 'p')
+                        ash_print_help();
                 }
             }
+
+        } else {
+            ash_set_args((argc - i - 1));
+            ash_script_load(argv[i]);
+            return ash_interact? 0: -1;
         }
-
-    if (n > 0){
-        int pos = 0;
-
-        for (size_t i = 1; i < argc; ++i){
-            if (!(argv[i][0]))
-                ++pos;
-            else
-                argv[i - pos] = argv[i];
-        }
-        argc -= n;
-    }
-
-    const char *v = argv[0];
-    if (*(v++) == '$') {
-        const char *var = ash_var_get_value( ash_find_var(v) );
-        if (var)
-            ash_print("%s\n", var);
-    } else {
-        int o;
-        if (( o = ash_find_builtin(argv[0])) != -1)
-            ash_builtin_exec(o, argc, argv);
-        else
-            execute(argv[0], (char *const*)argv);
     }
     return 0;
 }
 
-static void scan(void)
+int ash_check_login(void)
 {
-    ash_prompt();
-    char *buf;
-    if ((buf = ash_scan())){
-        int argc = 0;
-        const char *argv[MAX_ARGV];
-        memset(argv, 0, MAX_ARGV);
-        int fmt = 0;
-        if (!isspace(buf[0])){
-            if (!(buf[0] == '\"'))
-                argv[argc++] = &buf[0];
-            else
-                fmt = 1;
-        }
-        for (size_t i = 0; i < MIN_BUFFER_SIZE; ++i){
-            if (buf[i] == '\n')
-                buf[i] = '\0';
-            if (buf[i] == '"')
-                fmt = !fmt;
-            if (isspace(buf[i]) && !fmt){
-                buf[i] = '\0';
-                if (!isspace(buf[i + 1]))
-                    argv[argc++] = &buf[i + 1];
-            }
-        }
-        if (!argc)
-            return;
-        command(argc, (const char **)argv);
-    } else
-        ash_exit();
+    return ash_login;
 }
 
-void ash_exit(void)
+static void ash_assert_login(const char *shell)
 {
-    exit(0);
+    if (*shell == '-')
+        ash_login = 1;
 }
 
-static void ash_main(int argc, const char **pargs)
-{
-    ash_io_init();
-    ash_env_init();
-
-    for (;;)
-        scan();
-}
-
-static int ash_option(int argc, const char **argv)
-{
-    for (size_t i = 0; i < argc; i++)
-        if (argv[i][0] == '-' && argv[i][1] == '-'){
-            const char *s = &argv[i][2];
-            if (!(*s))
-                ash_print_err("no option specified");
-            if (!strcmp(s, "help"))
-                ash_print_help();
-            else if (!strcmp(s, "version"))
-                ash_print_msg(VERSION);
-            return 0;
-        }
-    return -1;
-}
-
-
+/* display the ash help prompt */
 void ash_print_help(void)
 {
-    ash_print("ash: acorn shell %s\n", VERSION);
+    ash_print("ash: acorn shell %s\n", ASH_VERSION);
     ash_print("usage: type commands e.g. help\n\n");
     ash_print("        $$$      \n");
     ash_print("         $$      \n");
@@ -172,7 +160,23 @@ void ash_print_help(void)
 
 int main(int argc, const char *argv[])
 {
-    if(ash_option(--argc, ++argv))
+    /* check if login shell */
+    ash_assert_login(argv[0]);
+    /* init the env variables */
+    ash_env_init();
+    /* init the shell interpreter */
+    ash_lang_init();
+
+    /* set default variables */
+    ash_var_set("0", argv[0], ASH_STATIC);
+    ash_var_set("#", "0", ASH_STATIC);
+    ash_var_set("ASH", "acorn shell", ASH_STATIC);
+    ash_var_set("ASH_VERSION", ASH_VERSION, ASH_STATIC);
+    ash_var_set("ASH_MAJOR", ASH_VERSION_MAJOR, ASH_STATIC);
+    ash_var_set("ASH_MINOR", ASH_VERSION_MINOR, ASH_STATIC);
+    ash_var_set("ASH_MICRO", ASH_VERSION_MICRO, ASH_STATIC);
+
+    if (ash_option(--argc, ++argv) == 0)
         ash_main(argc, argv);
     return 0;
 }
