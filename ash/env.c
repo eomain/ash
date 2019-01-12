@@ -31,6 +31,8 @@
     #include <unistd.h>
 #endif
 
+#define ASH_HOME_DIR "~"
+
 #define ENV_HOME "HOME"
 #define ENV_PATH "PATH"
 #define ENV_SHELL "SHELL"
@@ -41,8 +43,7 @@
 #define DEFAULT_PATH_SIZE 225
 #define MAX_HOST_SIZE 64
 
-extern int gethostname(char *, size_t);
-
+/* global env variables */
 static char *pwd = NULL;
 static size_t pwd_size = DEFAULT_PATH_SIZE;
 static char *dir = NULL;
@@ -51,6 +52,7 @@ static const char *uname = DEFAULT_UNAME;
 static const char *host = DEFAULT_HOST;
 static const char *path = NULL;
 static const char *shell = NULL;
+/* number of commands entered at the prompt */
 static size_t count = 0;
 
 static const char *ps1;
@@ -84,7 +86,7 @@ void ash_prompt(void)
             s++;
 
         } else
-            ash_print("%c", *s);
+            ash_putchar(*s);
     }
     ++count;
 }
@@ -141,7 +143,7 @@ void ash_env_pwd(void)
 
 void ash_env_dir(void){
     if(home && !strcmp(pwd, home)){
-        dir = "~";
+        dir = ASH_HOME_DIR;
     } else {
         if (pwd){
             size_t len = strlen(pwd);
