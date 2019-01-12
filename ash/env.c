@@ -34,6 +34,8 @@
 #define ENV_HOME "HOME"
 #define ENV_PATH "PATH"
 #define ENV_SHELL "SHELL"
+#define ENV_P1 "PS1"
+#define ENV_P2 "PS2"
 #define DEFAULT_UNAME "[?]"
 #define DEFAULT_HOST "[unknown]"
 #define DEFAULT_PATH_SIZE 225
@@ -55,7 +57,7 @@ static const char *ps1;
 
 void ash_prompt(void)
 {
-    ps1 = ash_var_get_value( ash_var_get("PS1") );
+    ps1 = ash_var_get_value( ash_var_get(ENV_P1) );
 
     for (const char *s = ps1; *s != '\0'; s++){
         if (*s == '\\'){
@@ -91,7 +93,7 @@ static const char *ps2;
 
 void ash_prompt_next(void)
 {
-    if ((ps2 = ash_var_get_value( ash_var_get("PS2") )))
+    if ((ps2 = ash_var_get_value( ash_var_get(ENV_P2) )))
         ash_print("%s", ps2);
 }
 
@@ -138,9 +140,9 @@ void ash_env_pwd(void)
 }
 
 void ash_env_dir(void){
-    if(home && !strcmp(pwd, home))
+    if(home && !strcmp(pwd, home)){
         dir = "~";
-    else {
+    } else {
         if (pwd){
             size_t len = strlen(pwd);
             while (len > 0){
@@ -167,8 +169,8 @@ void ash_env_init(void)
     ash_vars_init();
     ash_ops_init();
 
-    ash_var_set("PS1", "\\u::\\h \\W|\\$ ", ASH_STATIC);
-    ash_var_set("PS2", "| ", ASH_STATIC);
+    ash_var_set(ENV_P1, "\\u::\\h \\W|\\$ ", ASH_STATIC);
+    ash_var_set(ENV_P2, "| ", ASH_STATIC);
     if ((shell = getenv(ENV_SHELL)))
         ash_var_set(ENV_SHELL, shell, ASH_RODATA);
 
