@@ -1,4 +1,5 @@
-/* Copyright 2018 eomain - this program is licensed under the 2-clause BSD license
+/* Copyright 2018 eomain
+   this program is licensed under the 2-clause BSD license
    see LICENSE for the full license info
 */
 
@@ -6,20 +7,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __unix__
+#include "env.h"
+#include "io.h"
+#include "var.h"
+
+
+#ifdef ASH_UNIX
     #include <sys/types.h>
     #include <sys/wait.h>
     #include <pwd.h>
     #include <unistd.h>
 #endif
 
-#include "env.h"
-#include "io.h"
-#include "var.h"
-
 #define ENV_HOME "HOME"
 #define ENV_PATH "PATH"
-#define ENV_ASH_HISTORY ".ash_history"
+#define ENV_SHELL "SHELL"
 #define DEFAULT_UNAME "[?]"
 #define DEFAULT_HOST "[unknown]"
 #define DEFAULT_PATH_SIZE 225
@@ -34,12 +36,52 @@ static const char *home = NULL;
 static const char *uname = DEFAULT_UNAME;
 static const char *host = DEFAULT_HOST;
 static const char *path = NULL;
+static const char *shell = NULL;
+static size_t count = 0;
+
+static const char *ps1;
 
 void ash_prompt(void)
 {
-    ash_print("%s::%s %s|%c " , uname, host, dir, PROMPT);
+    ps1 = ash_var_get_value( ash_var_get("PS1") );
+
+    for (const char *s = ps1; *s != '\0'; s++){
+        if (*s == '\\'){
+            char c = *(s + 1);
+
+            if (c == 'n')
+                ash_putchar('\n');
+            else if (c == '#')
+                ash_print("%lu", count);
+            else if (c == 'u')
+                ash_print(uname);
+            else if (c == 'h')
+                ash_print(host);
+            else if (c == 'w')
+                ash_print(pwd);
+            else if (c == 'W')
+                ash_print(dir);
+            else if (c ==  '$')
+                ash_putchar(c);
+            else {
+                ash_putchar(*s);
+                continue;
+            }
+            s++;
+
+        } else
+            ash_print("%c", *s);
+    }
+    ++count;
 }
 
+static const char *ps2;
+
+void ash_prompt_next(void)
+{
+    if ((ps2 = ash_var_get_value( ash_var_get("PS2") )))
+        ash_print("%s", ps2);
+}
 
 const char *ash_env_get_pwd(void)
 {
@@ -89,11 +131,13 @@ void ash_env_dir(void){
     else {
         if (pwd){
             size_t len = strlen(pwd);
-            while (len > 0)
+            while (len > 0){
                 if (pwd[--len] == '/'){
                     dir = &pwd[++len];
                     return;
                 }
+            }
+
         } else
             dir = ".";
     }
@@ -108,6 +152,13 @@ static void ash_uname_host(void)
 
 void ash_env_init(void)
 {
+    ash_vars_init();
+
+    ash_var_set("PS1", "\\u::\\h \\W|\\$ ", ASH_STATIC);
+    ash_var_set("PS2", "| ", ASH_STATIC);
+    if ((shell = getenv(ENV_SHELL)))
+        ash_var_set(ENV_SHELL, shell, ASH_RODATA);
+
     pwd_size = pathconf(".", _PC_PATH_MAX);
     if ((pwd = malloc(sizeof (char) * pwd_size)) != NULL)
         ash_env_pwd();
