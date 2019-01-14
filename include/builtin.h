@@ -17,6 +17,7 @@
 #ifndef ASH_BUILTIN
 #define ASH_BUILTIN
 
+/* list of all ash builtin commands */
 enum ash_builtin {
     ASH_BUILTIN_ASSERT = 0,
     ASH_BUILTIN_BUILTIN,
@@ -35,5 +36,7 @@ enum ash_builtin {
 
 extern int ash_builtin_exec(int, int, const char * const *);
 extern int ash_builtin_find(const char *);
+extern void  ash_print_builtin(void);
+extern void  ash_print_err_builtin(const char *, const char *);
 
 #endif

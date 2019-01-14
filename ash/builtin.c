@@ -53,7 +53,11 @@ static const char *ash_help_usage(void)
     return builtin_msg[ASH_BUILTIN_HELP];
 }
 
-static void ash_print_builtin(void);
+void ash_print_err_builtin(const char *pname, const char *msg)
+{
+    ash_print(PNAME ": %s: error: %s \n", pname, msg);
+}
+
 static void ash_print_builtin_info(int, const char *);
 
 static int ash_builtin(int argc, const char * const *argv)
@@ -249,7 +253,7 @@ static void ash_print_builtin_info(int o, const char *s)
         ash_print("%s :: %s\n", usage[o].name, usage[o].usage());
 }
 
-static void ash_print_builtin(void)
+void ash_print_builtin(void)
 {
     ash_puts("built-in commands:");
     ash_puts("type builtin [command] for more info\n");
