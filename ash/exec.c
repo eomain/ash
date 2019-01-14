@@ -103,6 +103,11 @@ int ash_exec_set_path(void)
     return 0;
 }
 
+static void ash_print_err_command(const char *command, const char *msg)
+{
+    ash_print(PNAME ": error: %s: %s \n", command, msg);
+}
+
 static int ash_exec(const char *p, char *const argv[])
 {
     pid_t pid;
@@ -119,7 +124,7 @@ static int ash_exec(const char *p, char *const argv[])
     else {
         wait(&status);
         if (WIFSIGNALED(status)){
-            ash_print_err_builtin(argv[0], perr(SIG_MSG_ERR));
+            ash_print_err_command(argv[0], perr(SIG_MSG_ERR));
             ash_print("%s: exit status: %d\n", argv[0], WTERMSIG(status));
         }
     }
