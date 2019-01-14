@@ -34,26 +34,26 @@ void ash_set_errno(int err)
     ash_errno = err;
 }
 
+static inline size_t fsize(FILE *fp)
+{
+    fseek(fp, 0, SEEK_END);
+    size_t len = ftell(fp);
+    rewind(fp);
+    return len;
+}
+
 const char *ash_open(const char *name)
 {
     FILE *fp;
     fp = fopen(name, "r");
     if (fp != NULL){
-        fseek(fp, 0, SEEK_END);
-        size_t len = ftell(fp);
-        rewind(fp);
+        size_t len = fsize(fp);
         char *buf = ash_alloc(len + 1 * sizeof (char));
-        if(!buf)
-            ash_print_errno(name);
-        else {
-            if (fread(buf, sizeof (char), len, fp) != len)
-                ash_print_errno(name);
-            else
-                return buf;
-        }
+        int n = (fread(buf, sizeof (char), len, fp) == len) ? 1: 0;
         fclose(fp);
-    } else
-        ash_print_errno(name);
+        if (n == 1)
+            return buf;
+    }
 
     return NULL;
 }
@@ -90,7 +90,8 @@ void ash_print(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    vfprintf(stdout, fmt, ap);
+    if (!ash_get_silent())
+        vfprintf(stdout, fmt, ap);
     va_end(ap);
 }
 
@@ -117,16 +118,6 @@ void ash_print_err(const char *msg)
 void ash_print_errno(const char *msg)
 {
     ash_print(PNAME ": error: %s: %s\n", msg, strerror(errno));
-}
-
-void ash_print_err_builtin(const char *pname, const char *msg)
-{
-    ash_print(PNAME ": %s: error: %s \n", pname, msg);
-}
-
-void ash_print_err_command(const char *command, const char *msg)
-{
-    ash_print(PNAME ": error: %s: %s \n", command, msg);
 }
 
 void ash_io_init(void)
