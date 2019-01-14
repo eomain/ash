@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "ash.h"
+#include "builtin.h"
 #include "env.h"
 #include "io.h"
 #include "lang.h"
@@ -29,26 +30,36 @@
 #define ASH_ARG_LEN  5
 
 /* set if login shell */
-static int ash_login;
+static int ash_login = 0;
 
 /* start shell session after loading a script */
-static int ash_interact;
+static int ash_interact = 0;
 
 /* eval shell arguments as scipt */
-static int ash_eval;
+static int ash_eval = 0;
+
+/* begin shell without echo to standard out */
+static int ash_silent = 0;
 
 /* number of script arguments */
-static char ash_nargs[ASH_ARG_LEN] = { 0 };
+static char ash_nargs[ASH_ARG_LEN] = "0";
+
+static void ash_print_acorn(void);
 
 static void ash_set_args(int argc)
 {
-    sprintf(ash_nargs, "%ld", argc);
+    sprintf(ash_nargs, "%d", argc);
     ash_var_set("@", ash_nargs, ASH_STATIC);
 }
 
 int ash_get_interactive(void)
 {
     return ash_interact;
+}
+
+int ash_get_silent(void)
+{
+    return ash_silent;
 }
 
 /* ash status used as exit status */
@@ -91,7 +102,7 @@ static void ash_main(int argc, const char **argv)
 /* print the current ash version */
 static void ash_print_version(void)
 {
-    ash_print_msg( ASH_VERSION );
+    ash_print_msg(ASH_VERSION);
 }
 
 /* logout of ash session */
@@ -125,6 +136,8 @@ static int ash_option(int argc, const char **argv)
                 if (!(*s))
                     ash_print_err("no option specified");
 
+                if (!strcmp(s, "acorn"))
+                    ash_print_acorn();
                 if (!strcmp(s, "help"))
                     ash_print_help();
                 else if (!strcmp(s, "version"))
@@ -139,10 +152,14 @@ static int ash_option(int argc, const char **argv)
 
                     if (c == 'i')
                         ash_interact = 1;
-                    else if (c == 's')
+                    else if (c == 'c')
                         ash_eval = 1;
+                    else if (c == 's')
+                        ash_silent = 1;
                     else if (c == 'p')
                         ash_print_help();
+                    else if (c == 'v')
+                        ash_print_version();
                 }
             }
 
@@ -160,14 +177,8 @@ int ash_get_login(void)
     return ash_login;
 }
 
-static void ash_assert_login(const char *shell)
-{
-    if (*shell == '-')
-        ash_login = 1;
-}
-
-/* display the ash help prompt */
-void ash_print_help(void)
+/* display the ash acorn prompt */
+static void ash_print_acorn(void)
 {
     ash_print("ash: acorn shell %s\n", ASH_VERSION);
     ash_print("usage: type commands e.g. help\n\n");
@@ -181,6 +192,19 @@ void ash_print_help(void)
     ash_print("      oooooooo   \n");
     ash_print("        oooo     \n");
     ash_print("\n");
+}
+
+/* display the ash help prompt */
+void ash_print_help(void)
+{
+    ash_print_acorn();
+    /*ash_print_builtin();*/
+}
+
+static inline void ash_assert_login(const char *shell)
+{
+    if (*shell == '-')
+        ash_login = 1;
 }
 
 int main(int argc, const char *argv[])
@@ -201,7 +225,8 @@ int main(int argc, const char *argv[])
     ash_var_set("ASH_MINOR", ASH_VERSION_MINOR, ASH_STATIC);
     ash_var_set("ASH_MICRO", ASH_VERSION_MICRO, ASH_STATIC);
 
-    if (ash_option(--argc, ++argv) == 0)
+    int status = 0;
+    if ((status = ash_option(--argc, ++argv)) == 0)
         ash_main(argc, argv);
-    return 0;
+    return status;
 }
