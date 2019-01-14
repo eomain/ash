@@ -18,10 +18,14 @@
 #define ASH_ASH
 
 #define PNAME "ash"
-#define ASH_VERSION "0.1.4"
+
 #define ASH_VERSION_MAJOR "0"
 #define ASH_VERSION_MINOR "1"
 #define ASH_VERSION_MICRO "4"
+
+#define ASH_VERSION ASH_VERSION_MAJOR "." \
+                    ASH_VERSION_MINOR "." \
+                    ASH_VERSION_MICRO
 
 /* set ash exit status */
 extern void ash_set_status(int);
