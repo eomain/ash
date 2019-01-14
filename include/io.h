@@ -46,6 +46,7 @@ extern void  ash_print_msg(const char *);
 extern void  ash_print_err(const char *);
 extern void  ash_print_errno(const char *);
 extern void  ash_print_err_builtin(const char *, const char *);
+extern void ash_print_err_command(const char *, const char *);
 extern void  ash_io_init(void);
 extern void  ash_set_errno(int);
 extern const char *perr(int);

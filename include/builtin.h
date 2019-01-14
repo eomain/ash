@@ -33,7 +33,7 @@ enum ash_builtin {
     ASH_BUILTIN_NO
 };
 
-extern void ash_builtin_exec(int, int, const char * const *);
+extern int ash_builtin_exec(int, int, const char * const *);
 extern int ash_builtin_find(const char *);
 
 #endif
