@@ -1,0 +1,45 @@
+'\" et
+.TH ASH "1" 2018 "ash" "Acorn Shell Manual"
+
+.SH NAME
+ash
+\(em acorn shell command interpreter
+
+.SH SYNOPSIS
+ash [option] [script]
+
+.SH DESCRIPTION
+ash is a command shell interpreter. Commands are read as an input string,
+by default this is from standard input. Each command is then executed from the
+current shell environment.
+
+.SH OPTIONS
+here are a list of supported options in ash. Note that options are to be given
+before a script. Any options given after will be passed as arguments to the
+script itself.
+
+-i      start shell in interactive mode.
+
+-c      evaluate arguments as commands.
+
+-s      start a silent shell session
+
+-p      display prompt on startup.
+
+-v      display ash version.
+
+
+--help      display help message and exit.
+
+--version   display version and exit.
+
+.SH EXAMPLES
+here are some example of how to use ash.
+
+set a variable:     <var> :=  value
+
+    e.g.    a := "acorn"
+
+print a variable:   echo $<var>
+
+    e.g.    echo $a
