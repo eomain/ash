@@ -46,6 +46,11 @@ static void ash_set_args(int argc)
     ash_var_set("@", ash_nargs, ASH_STATIC);
 }
 
+int ash_get_interactive(void)
+{
+    return ash_interact;
+}
+
 /* ash status used as exit status */
 static int e_stat = 0;
 
@@ -58,7 +63,10 @@ void ash_set_status(int status)
 /* ash main display prompt and read input */
 static void ash_main(int argc, const char **argv)
 {
-    /* init io buffers */
+    /* set up environment */
+    /*ash_var_env_new(argc, argv);*/
+
+    /* init io buffers and signal handlers */
     ash_io_init();
 
     char *buf;
@@ -105,14 +113,15 @@ void ash_abort(const char *e_msg)
 static int ash_option(int argc, const char **argv)
 {
     for (size_t i = 0; i < argc; i++){
-        if (argv[i][0] == '-') {
-            if (!argv[i][1]){
+        const char *arg = argv[i];
+        if (arg[0] == '-') {
+            if (!arg[1]){
                 ash_print_err("no option specified");
                 return -1;
             }
 
-            if (argv[i][1] == '-'){
-                const char *s = &argv[i][2];
+            if (arg[1] == '-'){
+                const char *s = &arg[2];
                 if (!(*s))
                     ash_print_err("no option specified");
 
@@ -123,10 +132,10 @@ static int ash_option(int argc, const char **argv)
                 return -1;
 
             } else {
-                size_t len = strlen(&argv[i][1]);
+                size_t len = strlen(&arg[1]);
 
                 if (len == 1){
-                    char c = argv[i][1];
+                    char c = arg[1];
 
                     if (c == 'i')
                         ash_interact = 1;
@@ -146,7 +155,7 @@ static int ash_option(int argc, const char **argv)
     return 0;
 }
 
-int ash_check_login(void)
+int ash_get_login(void)
 {
     return ash_login;
 }
