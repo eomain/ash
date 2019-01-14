@@ -27,13 +27,14 @@
 #include "env.h"
 #include "exec.h"
 #include "io.h"
+#include "ops.h"
 #include "sleep.h"
 #include "unset.h"
 #include "var.h"
 
 static const char *builtin_msg[] = {
     [  ASH_BUILTIN_BUILTIN ]    =   "list built-in commands",
-    [  ASH_BUILTIN_EXIT    ]    =   "exit shell session",
+    [  ASH_BUILTIN_EXIT    ]    =   "[status] exit shell session",
     [  ASH_BUILTIN_HELP    ]    =   "display help prompt"
 };
 
@@ -64,17 +65,29 @@ static int ash_builtin(int argc, const char * const *argv)
     else {
         if ((status = ash_builtin_find(argv[1])) != -1)
             ash_print_builtin_info(status, argv[1]);
-        else
+        else {
             ash_print_err_builtin(argv[1], perr(UREG_CMD_ERR));
+            return 1;
+        }
     }
     return 0;
 }
 
 static int ash_exit(int argc, const char * const *argv)
 {
+    int status = 0;
+
+    if (argc > 1){
+        if (ash_stoi_ck(argv[1])){
+            status = atoi(argv[1]);
+            ash_set_status(status);
+        } else
+            status = 0;
+    }
+
     ash_puts(argv[0]);
     ash_logout();
-    return 0;
+    return status;
 }
 
 static int ash_help(int argc, const char * const *argv)
@@ -164,11 +177,12 @@ static usage[ ASH_BUILTIN_NO ] = {
 
 };
 
-void ash_builtin_exec(int o, int argc, const char * const *argv)
+int ash_builtin_exec(int o, int argc, const char * const *argv)
 {
     assert( o < ASH_BUILTIN_NO );
     int status = usage[o].main(argc, argv);
     ash_exec_set_exit(status);
+    return status;
 }
 
 int ash_builtin_find(const char *v)
