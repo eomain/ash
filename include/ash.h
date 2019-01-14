@@ -31,6 +31,8 @@
 extern void ash_set_status(int);
 /* get interactive mode status */
 extern int  ash_get_interactive(void);
+/* get silent mode status */
+extern int ash_get_silent(void);
 /* display the ash help prompt */
 extern void ash_print_help(void);
 /* logout of ash session */
