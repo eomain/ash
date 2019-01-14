@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "builtin.h"
 #include "cd.h"
 #include "env.h"
 #include "io.h"

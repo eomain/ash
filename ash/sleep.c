@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "builtin.h"
 #include "env.h"
 #include "io.h"
 #include "sleep.h"
