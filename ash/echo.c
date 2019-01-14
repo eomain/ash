@@ -31,20 +31,22 @@ int ash_echo(int argc, const char * const *argv)
     /* todo: add flag for space */
 
     if(argc > 1){
-        for (size_t o = 1; o < argc -1; ++o){
-            if (argv[1][0] == '-'){
-                if (argv[1][1] == 'n' && !argv[1][2]){
+        for (size_t o = 1; o < argc; ++o){
+            const char *a = argv[o];
+            if (a[0] == '-'){
+                if (a[1] == 'n'){
                     n = 0;
                     ++i;
                 }
-            }
+            } else
+                break;
         }
 
         for (; i < argc; ++i)
             ash_print("%s ", argv[i]);
 
         if (n == 1)
-            ash_print("%c", '\n');
+            ash_putchar('\n');
     }
     return 0;
 }
