@@ -121,7 +121,12 @@ void ash_print_errno(const char *msg)
 
 void ash_print_err_builtin(const char *pname, const char *msg)
 {
-    ash_print(PNAME " %s: error: %s \n", pname, msg);
+    ash_print(PNAME ": %s: error: %s \n", pname, msg);
+}
+
+void ash_print_err_command(const char *command, const char *msg)
+{
+    ash_print(PNAME ": error: %s: %s \n", command, msg);
 }
 
 void ash_io_init(void)
