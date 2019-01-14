@@ -23,10 +23,17 @@
 #define ASH_VERSION_MINOR "1"
 #define ASH_VERSION_MICRO "4"
 
+/* set ash exit status */
 extern void ash_set_status(int);
+/* get interactive mode status */
+extern int  ash_get_interactive(void);
+/* display the ash help prompt */
 extern void ash_print_help(void);
+/* logout of ash session */
 extern void ash_logout(void);
-extern int ash_check_login(void);
+/* get login shell status */
+extern int  ash_get_login(void);
+/* abort shell session */
 extern void ash_abort(const char *);
 
 #endif

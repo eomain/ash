@@ -34,6 +34,9 @@ static int ash_login;
 /* start shell session after loading a script */
 static int ash_interact;
 
+/* eval shell arguments as scipt */
+static int ash_eval;
+
 /* number of script arguments */
 static char ash_nargs[ASH_ARG_LEN] = { 0 };
 
@@ -127,6 +130,8 @@ static int ash_option(int argc, const char **argv)
 
                     if (c == 'i')
                         ash_interact = 1;
+                    else if (c == 's')
+                        ash_eval = 1;
                     else if (c == 'p')
                         ash_print_help();
                 }
