@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "env.h"
+#include "exec.h"
 #include "io.h"
 #include "ops.h"
 #include "var.h"
@@ -193,4 +194,5 @@ void ash_env_init(void)
     ash_var_set_builtin(ASH_LOGNAME, uname);
     ash_var_set_builtin(ASH_HOME, home);
     ash_env_dir();
+    ash_exec_set_path();
 }
