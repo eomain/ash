@@ -1,0 +1,17 @@
+
+ash: acorn shell
+
+ash:        source directory
+doc:        documentation
+include:    header files
+lib:        library
+share:      misc
+tests:      ash test scripts
+
+ash usage:
+    to display prompt:      help
+    to list builtins:       builtin
+    to print to stdout:     echo
+
+
+author: eomain
