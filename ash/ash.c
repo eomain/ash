@@ -211,6 +211,8 @@ int main(int argc, const char *argv[])
 {
     /* check if login shell */
     ash_assert_login(argv[0]);
+    /* check user */
+    ash_check_root();
     /* init the env variables */
     ash_env_init();
     /* init the shell interpreter */
