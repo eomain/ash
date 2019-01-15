@@ -4,7 +4,7 @@
 # this program is licensed under the 2-clause BSD license
 # see COPYRIGHT for the full license info
 
-# ash (acorn shell) install script
+# ash (acorn shell) test script
 
 # print hello world
 echo "hello world!"
