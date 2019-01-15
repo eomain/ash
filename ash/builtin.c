@@ -200,6 +200,10 @@ int ash_builtin_exec(int o, int argc, const char * const *argv)
 int ash_builtin_find(const char *v)
 {
     switch (v[0]){
+        case '.':
+            if (!v[1])
+                return ASH_BUILTIN_SOURCE;
+            break;
         case 'b':
             if (v[1] == 'u' &&
                 v[2] == 'i' &&

@@ -161,7 +161,7 @@ static const char *e_msg[] = {
 
 static const char *ash_exec_signal(int e_status)
 {
-    if (e_status < sizeof (e_msg)/ sizeof(e_msg[0]))
+    if (e_status < sizeof(e_msg) / sizeof(e_msg[0]))
         return e_msg[e_status];
     return e_msg[SIGTERM];
 }
