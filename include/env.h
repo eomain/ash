@@ -23,6 +23,7 @@
     #define ASH_UNIX
 #endif
 
+extern int ash_check_root(void);
 extern void ash_prompt(void);
 extern void ash_prompt_next(void);
 extern void ash_env_init(void);

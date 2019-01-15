@@ -56,6 +56,16 @@ static const char *shell = NULL;
 /* number of commands entered at the prompt */
 static size_t count = 0;
 
+/* if user is 'root' */
+static int root = 0;
+
+int ash_check_root(void)
+{
+    if (getuid() == 0)
+        root = 1;
+    return root;
+}
+
 static const char *ps1;
 
 void ash_prompt(void)
@@ -68,6 +78,8 @@ void ash_prompt(void)
 
             if (c == 'n')
                 ash_putchar('\n');
+            else if (c == 'r')
+                ash_putchar('\r');
             else if (c == '#')
                 ash_print("%lu", count);
             else if (c == 'u')
@@ -78,8 +90,8 @@ void ash_prompt(void)
                 ash_print(pwd);
             else if (c == 'W')
                 ash_print(dir);
-            else if (c ==  '$')
-                ash_putchar(c);
+            else if (c == '$')
+                ash_putchar(root ? '#': c);
             else {
                 ash_putchar(*s);
                 continue;
