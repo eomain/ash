@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -108,6 +109,8 @@ static void ash_print_err_command(const char *command, const char *msg)
     ash_print(PNAME ": error: %s: %s \n", command, msg);
 }
 
+static const char *ash_exec_signal(int e_status);
+
 static int ash_exec(const char *p, char *const argv[])
 {
     pid_t pid;
@@ -123,10 +126,8 @@ static int ash_exec(const char *p, char *const argv[])
     }
     else {
         wait(&status);
-        if (WIFSIGNALED(status)){
-            ash_print_err_command(argv[0], perr(SIG_MSG_ERR));
-            ash_print("%s: exit status: %d\n", argv[0], WTERMSIG(status));
-        }
+        if (WIFSIGNALED(status))
+            ash_print("%s %s\n", ash_exec_signal(WTERMSIG(status)), argv[0]);
     }
 
     ash_exec_set_exit(status);
@@ -147,4 +148,20 @@ int ash_exec_command(int argc, const char **argv)
         status = ash_exec(argv[0], (char *const*)argv);
 
     return status;
+}
+
+static const char *e_msg[] = {
+    [ SIGABRT ] = "(abort)",
+    [ SIGFPE  ] = "(floating point error)",
+    [ SIGILL  ] = "(illegal operation)",
+    [ SIGINT  ] = "(interrupt)",
+    [ SIGSEGV ] = "(segfault)",
+    [ SIGTERM ] = "(terminated)"
+};
+
+static const char *ash_exec_signal(int e_status)
+{
+    if (e_status < sizeof (e_msg)/ sizeof(e_msg[0]))
+        return e_msg[e_status];
+    return e_msg[SIGTERM];
 }
