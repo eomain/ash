@@ -28,6 +28,7 @@ enum ash_builtin {
     ASH_BUILTIN_HELP,
     ASH_BUILTIN_HISTORY,
     ASH_BUILTIN_SLEEP,
+    ASH_BUILTIN_SOURCE,
     ASH_BUILTIN_UNSET,
 
     /* number of ash builtin commands */

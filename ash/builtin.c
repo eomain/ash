@@ -29,6 +29,7 @@
 #include "io.h"
 #include "ops.h"
 #include "sleep.h"
+#include "source.h"
 #include "unset.h"
 #include "var.h"
 
@@ -172,6 +173,13 @@ static usage[ ASH_BUILTIN_NO ] = {
         .usage   = ash_sleep_usage
     },
 
+    [ ASH_BUILTIN_SOURCE ] = {
+        .builtin = ASH_BUILTIN_SOURCE,
+        .name    = "source",
+        .main    = ash_source,
+        .usage   = ash_source_usage
+    },
+
     [ ASH_BUILTIN_UNSET ] = {
         .builtin = ASH_BUILTIN_UNSET,
         .name    = "unset",
@@ -233,6 +241,13 @@ int ash_builtin_find(const char *v)
                 v[4] == 'p' &&
                 !(v[5]))
                 return ASH_BUILTIN_SLEEP;
+            else if (v[1] == 'o' &&
+                     v[2] == 'u' &&
+                     v[3] == 'r' &&
+                     v[4] == 'c' &&
+                     v[5] == 'e' &&
+                     !v[6])
+                return ASH_BUILTIN_SOURCE;
             break;
 
         case 'u':
