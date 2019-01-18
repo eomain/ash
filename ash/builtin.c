@@ -87,8 +87,7 @@ static int ash_exit(int argc, const char * const *argv)
         if (ash_stoi_ck(argv[1])){
             status = atoi(argv[1]);
             ash_set_status(status);
-        } else
-            status = 0;
+        }
     }
 
     ash_puts(argv[0]);
