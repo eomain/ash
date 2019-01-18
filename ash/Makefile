@@ -11,7 +11,8 @@ BIN = ../bin
 
 OBJS = ash.o io.o env.o var.o builtin.o \
 	   lang.o mem.o script.o exec.o echo.o \
-	   cd.o sleep.o unset.o ops.o
+	   cd.o sleep.o unset.o ops.o source.o \
+	   read.o
 
 all: $(OBJS)
 	-@mkdir -p $(BIN)
@@ -21,4 +22,4 @@ all: $(OBJS)
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
-	-@rm -r $(BIN) $(OBJS)
+	-@rm -f -r $(BIN) $(OBJS)

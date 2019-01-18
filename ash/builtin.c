@@ -28,6 +28,7 @@
 #include "exec.h"
 #include "io.h"
 #include "ops.h"
+#include "read.h"
 #include "sleep.h"
 #include "source.h"
 #include "unset.h"
@@ -166,6 +167,13 @@ static usage[ ASH_BUILTIN_NO ] = {
         .usage   = NULL
     },
 
+    [ ASH_BUILTIN_READ ] = {
+        .builtin = ASH_BUILTIN_READ,
+        .name    = "read",
+        .main    = ash_read,
+        .usage   = ash_read_usage
+    },
+
     [ ASH_BUILTIN_SLEEP ] = {
         .builtin = ASH_BUILTIN_SLEEP,
         .name    = "sleep",
@@ -237,6 +245,13 @@ int ash_builtin_find(const char *v)
                 v[3] == 'p' &&
                 !(v[4]))
                 return ASH_BUILTIN_HELP;
+            break;
+        case 'r':
+            if (v[1] == 'e' &&
+                v[2] == 'a' &&
+                v[3] == 'd' &&
+                !v[4])
+                return ASH_BUILTIN_READ;
             break;
         case 's':
             if (v[1] == 'l' &&
