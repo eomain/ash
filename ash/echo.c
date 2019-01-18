@@ -26,27 +26,43 @@ const char *ash_echo_usage(void)
 
 int ash_echo(int argc, const char * const *argv)
 {
-    int n = 1;
-    size_t i = 1;
-    /* todo: add flag for space */
+    /* add newline */
+    char n = 1;
+    /* add whitespace */
+    char s = 1;
+
+    int i = 1;
 
     if(argc > 1){
-        for (size_t o = 1; o < argc; ++o){
-            const char *a = argv[o];
+        while (i < argc){
+            const char *a = argv[i];
             if (a[0] == '-'){
-                if (a[1] == 'n'){
-                    n = 0;
-                    ++i;
+                switch (a[1]){
+                    case 'n':
+                        n = 0;
+                        ++i;
+                        break;
+                    case 's':
+                        s = 0;
+                        ++i;
+                        break;
                 }
             } else
                 break;
         }
 
-        for (; i < argc; ++i)
-            ash_print("%s ", argv[i]);
+        const char *fmt = s == 0 ? "%s": "%s ";
 
-        if (n == 1)
-            ash_putchar('\n');
+        if (i < argc){
+            for (; i < argc -1; ++i)
+                ash_print(fmt, argv[i]);
+            ash_print(argv[argc - 1]);
+        }
+
     }
+
+    if (n == 1)
+        ash_putchar('\n');
+
     return 0;
 }
