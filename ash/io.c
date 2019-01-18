@@ -14,6 +14,7 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <assert.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -58,7 +59,7 @@ const char *ash_open(const char *name)
     return NULL;
 }
 
-static char buf[MIN_BUFFER_SIZE];
+static char scan_buf[MIN_BUFFER_SIZE];
 
 static void ash_io_handle(int sig)
 {
@@ -78,11 +79,19 @@ static void ash_io_signal(void)
     sigaction(SIGTSTP, &act, NULL);
 }
 
+int ash_scan_buffer(char *buf, size_t nbytes)
+{
+    assert(buf);
+    memset(buf, 0, nbytes);
+    if (fgets(buf, nbytes, stdin))
+        return 0;
+    return -1;
+}
+
 char *ash_scan(void)
 {
-    memset(buf, 0, MIN_BUFFER_SIZE);
-    if (fgets(buf, MIN_BUFFER_SIZE, stdin))
-        return buf;
+    if (ash_scan_buffer(scan_buf, MIN_BUFFER_SIZE) == 0)
+        return scan_buf;
     return NULL;
 }
 
@@ -90,9 +99,14 @@ void ash_print(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
+    ash_vprint(fmt, ap);
+    va_end(ap);
+}
+
+void ash_vprint(const char *fmt, va_list ap)
+{
     if (!ash_get_silent())
         vfprintf(stdout, fmt, ap);
-    va_end(ap);
 }
 
 void ash_puts(const char *s)

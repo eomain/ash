@@ -17,6 +17,8 @@
 #ifndef ASH_IO
 #define ASH_IO
 
+#include <stdarg.h>
+
 #define PROMPT '$'
 
 /* ash error code used to set and print error message */
@@ -39,7 +41,9 @@ enum ash_errno {
 extern const char *ash_open(const char *);
 
 extern char *ash_scan(void);
+extern int   ash_scan_buffer(char *, size_t);
 extern void  ash_print(const char *, ...);
+extern void  ash_vprint(const char *, va_list);
 extern void  ash_puts(const char *);
 extern void  ash_putchar(char);
 extern void  ash_print_msg(const char *);
