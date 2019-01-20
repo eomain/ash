@@ -44,6 +44,7 @@ extern struct ash_var *ash_var_find_builtin(int);
 extern struct ash_var *ash_var_find(const char *);
 extern void ash_var_set_builtin(int, const char *);
 extern const char *ash_var_get_value(struct ash_var *);
+extern char *ash_var_clone_value(struct ash_var *);
 extern struct ash_var *ash_var_set(const unsigned char *, const char *, int);
 extern struct ash_var *ash_var_set_array(const unsigned char *, int, const char **, int);
 extern int ash_var_unset(const unsigned char *);
@@ -52,7 +53,10 @@ extern const char *ash_var_array_value(struct ash_var *, size_t);
 extern int ash_var_insert_array(struct ash_var *, int, const char *);
 
 extern void ash_var_env_new(int, const char **);
+extern void ash_var_env_destroy(void);
+extern struct ash_var *ash_var_env_set(const unsigned char *, const char *, int);
 extern struct ash_var *ash_var_env_get(const unsigned char *);
+extern int ash_var_env_unset(const unsigned char *);
 
 extern void *ash_func_set(const unsigned char *, void *);
 extern void *ash_func_get(const char *);

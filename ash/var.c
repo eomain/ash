@@ -22,6 +22,7 @@
 #include "ash.h"
 #include "mem.h"
 #include "io.h"
+#include "ops.h"
 #include "var.h"
 
 /* ash atomic variable */
@@ -47,42 +48,59 @@ struct ash_array {
     size_t size;
 };
 
-static void ash_array_resize(struct ash_array *array, size_t o)
+static void
+ash_array_resize(struct ash_array *array, size_t len)
 {
-    if (array->size == 0){
-        array->data = ash_alloc(o);
-        array->size = o;
+    size_t size = sizeof *array->data;
+    if (array->len == 0){
+        array->data = ash_alloc(size * len);
+        array->size = len;
+        array->len = 0;
     } else {
-        array->size += o;
-        array->data = ash_realloc((void *)array->data, array->size);
+        array->size += len;
+        array->data = ash_realloc((void *)array->data, size * array->size);
     }
 }
 
-static const char *ash_array_get_value(struct ash_array *array, size_t o)
+static const char *
+ash_array_get_value(struct ash_array *array, size_t index)
 {
-    assert( array );
-    if (array->len > o)
-        return array->data[o];
+    assert(array);
+    if (array->len > index)
+        return array->data[index];
     else
         return &nil;
 }
 
-static inline int ash_array_set_value(struct ash_array *array,
-                                      int argc, const char **argv)
+static inline int
+ash_array_set_value(struct ash_array *array, int argc, const char **argv)
 {
-    if ((int)(array->size - array->len - argc) < 0)
+    int space = (int) array->size - (int) array->len - argc;
+    if (space <= 0)
         ash_array_resize(array, argc);
-    for (size_t i = 0; i < argc; ++i)
+    size_t i = array->len > 0 ? array->len -1: 0;
+    for (; i < argc; ++i){
+        assert( i < array->size );
         array->data[i] = argv[i];
+    }
     array->len += argc;
 }
 
-static void ash_array_unset(struct ash_array *array)
+static void
+ash_array_unset(struct ash_array *array)
 {
     for (size_t i = 0; i < array->len; ++i){
         if (array->data[i])
             ash_free((void *)array->data[i]);
     }
+
+    if (array->data){
+        ash_free(array->data);
+        array->data = NULL;
+    }
+
+    array->len = 0;
+    array->size = 0;
 }
 
 struct ash_var {
@@ -96,8 +114,6 @@ struct ash_var {
     } value;
     int rodata;
 };
-
-static struct ash_var *ash_global_new(void);
 
 static struct ash_var *
 ash_var_assert(struct ash_var *var)
@@ -121,7 +137,7 @@ int ash_var_check_composite(struct ash_var *var)
 static void ash_var_init(struct ash_var *var, int type,
                          const char *name, const char *value, int ro)
 {
-    assert( var != NULL );
+    assert(var != NULL);
     var->type = type;
     var->nil = 0;
     if (type == ASH_ATOMIC && !value)
@@ -135,20 +151,26 @@ struct {
     size_t len;
     size_t pos;
     struct ash_var *vars;
-} static ash_globals = {
+} static ash_global = {
     .len = GLOBAL_SIZE,
     .pos = 0,
     .vars = NULL
 };
 
+static void ash_global_resize(void)
+{
+    ash_global.len *= GLOBAL_RATE;
+    size_t size = ash_global.len * sizeof (*ash_global.vars);
+    ash_global.vars = ash_realloc(ash_global.vars, size);
+}
+
 static struct ash_var *ash_global_new(void)
 {
-    assert( ash_globals.pos <= ash_globals.len );
-    if (ash_globals.pos == ash_globals.len){
-        size_t n = ash_globals.len * GLOBAL_RATE;
-        ash_globals.vars = ash_realloc(&ash_globals.vars, n);
-    }
-    return &ash_globals.vars[ash_globals.pos++];
+    assert(ash_global.pos <= ash_global.len);
+    if (ash_global.pos == (ash_global.len -2))
+        ash_global_resize();
+    size_t pos = ash_global.pos++;
+    return &ash_global.vars[pos];
 }
 
 static struct ash_var ash_vars[] = {
@@ -257,22 +279,36 @@ struct ash_var *ash_var_find(const char *s)
     return ash_var_get(s);
 }
 
+static struct ash_var *default_bucket[BUCKET_SIZE] = { 0 };
+static void *default_func[BUCKET_SIZE] = { 0 };
+
 struct ash_var_set {
     size_t size;
     struct ash_var **bucket;
     void **func;
 
 } static ash_bucket = {
-    .size = BUCKET_SIZE
+    .size = BUCKET_SIZE,
+    .bucket = default_bucket,
+    .func = default_func
 };
 
 static inline void ash_var_set_init(struct ash_var_set *set)
 {
     set->bucket = ash_alloc( sizeof (*set->bucket) * BUCKET_SIZE);
     set->func = ash_alloc( sizeof (void *) * BUCKET_SIZE );
-    memset(set->bucket, nil, sizeof (*set->bucket) * BUCKET_SIZE);
-    memset(set->func, nil, sizeof (void *) * BUCKET_SIZE);
+    memset(set->bucket, 0, sizeof (*set->bucket) * BUCKET_SIZE);
+    memset(set->func, 0, sizeof (void *) * BUCKET_SIZE);
     set->size = BUCKET_SIZE;
+}
+
+static void ash_var_set_clear(struct ash_var_set *set)
+{
+    if (set->bucket)
+        ash_free(set->bucket);
+    if (set->func)
+        ash_free(set->func);
+    set->size = 0;
 }
 
 static int ash_var_insert(struct ash_var_set *set, size_t k, struct ash_var *var)
@@ -365,10 +401,8 @@ int ash_var_insert_array(struct ash_var *var, int index, const char *value)
 {
     assert( var );
 
-    if (var->rodata == ASH_RODATA){
-        ash_print_err(perr(RODATA_ERR));
+    if (!ash_var_assert(var))
         return -1;
-    }
 
     if (var->type == ASH_COMPOSITE){
         struct ash_array *array = &var->value.comp;
@@ -380,18 +414,23 @@ int ash_var_insert_array(struct ash_var *var, int index, const char *value)
     return -1;
 }
 
-int ash_var_unset(const unsigned char *key)
+static void ash_var_free(struct ash_var *var)
 {
-    size_t hash = ash_compute_hash(key);
-    struct ash_var *var = ash_var_access(&ash_bucket, hash);
-    if (!var)
-        return -1;
     if (var->rodata == ASH_DATA){
         if (var->type == ASH_ATOMIC)
             ash_free((void *)var->value.atom);
         else if (var->type == ASH_COMPOSITE)
             ash_array_unset(&var->value.comp);
     }
+}
+
+int ash_var_unset(const unsigned char *key)
+{
+    size_t hash = ash_compute_hash(key);
+    struct ash_var *var = ash_var_access(&ash_bucket, hash);
+    if (!var)
+        return -1;
+    ash_var_free(var);
     ash_var_remove(&ash_bucket, hash);
     return 0;
 }
@@ -454,6 +493,17 @@ const char *ash_var_get_value(struct ash_var *var)
     return NULL;
 }
 
+char *ash_var_clone_value(struct ash_var *var)
+{
+    const char *value = ash_var_get_value(var);
+    if (!value)
+        return NULL;
+    size_t len = strlen(value) + 1;
+    char *s = ash_alloc(len);
+    strcpy(s, (const char *) value);
+    return s;
+}
+
 int ash_var_check_nil(struct ash_var *var)
 {
     if (!var)
@@ -461,50 +511,54 @@ int ash_var_check_nil(struct ash_var *var)
     return var->nil;
 }
 
-struct ash_namespace {
-    struct ash_namespace *parent;
-    struct ash_var_set set;
-};
-
 /* number of namespaces in use */
-static int ns_use;
-/*static struct ash_namespace ash_nss[ASH_NS_LIMIT];*/
-struct ash_namespace *ash_ns = NULL;
-
-static void ash_namespace_init(struct ash_namespace *ns)
-{
-    /*if (ns_use == ASH_NS_LIMIT -1)
-        return NULL;
-    struct ash_namespace *ns = &ash_nss[ns_use];*/
-    ns->parent = ash_ns;
-    ash_var_set_init(&ns->set);
-    ash_ns = ns;
-    ++ns_use;
-}
-
-static void ash_namespace_destroy(struct ash_namespace *ns)
-{
-    if (ns){
-        ash_ns = ns->parent;
-        ash_free(ns->set.bucket);
-    }
-}
+static int ns_use = 0;
 
 struct ash_var_env {
+    /* env arguments */
     struct ash_array local;
-    struct ash_namespace ns;
+    /* the env namespace */
+    struct ash_var_set ns;
+    /* the parent env */
+    struct ash_var_env *parent;
 };
 
 static struct ash_var_env ash_envs[ASH_NS_LIMIT];
 static struct ash_var_env *ash_env;
 
-void ash_var_env_new(int argc, const char **argv)
+static inline struct ash_var_env *env_new(void)
 {
     struct ash_var_env *env = &ash_envs[ns_use];
+    if (ns_use < ASH_NS_LIMIT)
+        ns_use++;
+    return env;
+}
+
+static void env_destroy(void)
+{
+    ash_env = ash_env->parent;
+    if (ns_use > 0)
+        --ns_use;
+}
+
+void ash_var_env_new(int argc, const char **argv)
+{
+    struct ash_var_env *env = env_new();
     if (argc > 0)
         ash_array_set_value(&env->local, argc, argv);
-    ash_namespace_init(&env->ns);
+    ash_var_set_init(&env->ns);
+    if (ash_env)
+        env->parent = ash_env;
     ash_env = env;
+}
+
+void ash_var_env_destroy(void)
+{
+    if (ash_env){
+        ash_array_unset(&ash_env->local);
+        ash_var_set_clear(&ash_env->ns);
+        env_destroy();
+    }
 }
 
 static struct ash_var env_var = {
@@ -513,17 +567,50 @@ static struct ash_var env_var = {
     .rodata = ASH_STATIC
 };
 
+int ash_var_env_unset(const unsigned char *key)
+{
+    if (!ash_env)
+        return -1;
+
+    size_t hash = ash_compute_hash(key);
+    struct ash_var *var = ash_var_access(&ash_env->ns, hash);
+    if (!var)
+        return -1;
+    ash_var_free(var);
+    ash_var_remove(&ash_env->ns, hash);
+    return 0;
+}
+
+static struct ash_var_set *ash_var_env_find(size_t hash)
+{
+    assert(ash_env);
+    struct ash_var_env *env = ash_env;
+    do {
+        if (ash_var_access(&env->ns, hash))
+            return &env->ns;
+    } while ((env = env->parent));
+
+    return NULL;
+}
+
 struct ash_var *ash_var_env_set(const unsigned char *key, const char *value, int ro)
 {
     size_t hash = ash_compute_hash(key);
-    struct ash_var *var = ash_var_get(key);
-    if ((var = ash_var_assert(var)))
-        ash_var_unset(key);
+    struct ash_var *var;
+    if ((var = ash_var_env_get(key)))
+        ash_var_env_unset(key);
     else
         var = ash_global_new();
+
     ash_var_init(var, ASH_ATOMIC, key, value, ro);
-    if (ash_env)
-        ash_var_insert(&ash_env->ns.set, hash, var);
+
+    if (ash_env) {
+        struct ash_var_set *set = ash_var_env_find(hash);
+        if (set)
+            ash_var_insert(set, hash, var);
+        else
+            ash_var_insert(&ash_env->ns, hash, var);
+    }
     else
         ash_var_insert(&ash_bucket, hash, var);
     return var;
@@ -531,7 +618,7 @@ struct ash_var *ash_var_env_set(const unsigned char *key, const char *value, int
 
 static struct ash_var *ash_var_env_local(const char *name, int index)
 {
-    assert( ash_env );
+    assert(ash_env);
     const char *local = ash_array_get_value(&ash_env->local, index);
     if (!local)
         return NULL;
@@ -542,27 +629,24 @@ static struct ash_var *ash_var_env_local(const char *name, int index)
 
 struct ash_var *ash_var_env_get(const unsigned char *key)
 {
-    if (ash_env){
-        char c;
-        const char *s = key;
-        int o = 1;
-        while ((c = *(s++))){
-            if (!(c >= '0' && c <= '9'))
-                o = 0;
-        }
+    if (!key)
+        return NULL;
 
-        if (o == 1){
+    if (ash_env){
+        if (ash_stoi_ck(key)){
             int index = atoi(key);
             return ash_var_env_local(key, index - 1);
         }
-    }
 
-    size_t hash = ash_compute_hash(key);
-    struct ash_var *var = NULL;
-    if (ash_env){
-        struct ash_var_set *set = &ash_env->ns.set;
-        if ((var = ash_var_access(set, hash)))
-            return var;
+        size_t hash = ash_compute_hash(key);
+        struct ash_var *var = NULL;
+        struct ash_var_env *env = ash_env;
+
+        do {
+            struct ash_var_set *set = &env->ns;
+            if ((var = ash_var_access(set, hash)))
+                return var;
+        } while ((env = env->parent));
     }
 
     return ash_var_find(key);
@@ -570,7 +654,8 @@ struct ash_var *ash_var_env_get(const unsigned char *key)
 
 void ash_vars_init(void)
 {
-    size_t n = ash_globals.len;
-    ash_globals.vars = ash_alloc( sizeof (*ash_globals.vars) * n );
-    ash_var_set_init(&ash_bucket);
+    size_t size = ash_global.len;
+    ash_global.vars = ash_alloc(sizeof (*ash_global.vars) * size);
+    memset(ash_bucket.bucket, 0, sizeof (*ash_bucket.bucket) * BUCKET_SIZE);
+    memset(ash_bucket.func, 0, sizeof (void *) * BUCKET_SIZE);
 }
