@@ -17,7 +17,9 @@
 #ifndef ASH_OPS
 #define ASH_OPS
 
-extern const char *ash_ops_tidle(const char *);
+extern const char *ash_ops_tilde(const char *);
 extern void ash_ops_init(void);
+
+extern int ash_stoi_ck(const char *);
 
 #endif

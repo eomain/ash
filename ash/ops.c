@@ -23,22 +23,29 @@
 #include "ops.h"
 #include "mem.h"
 
-static char *ash_tidle;
-
-const char *ash_ops_tidle(const char *s)
+const char *ash_ops_tilde(const char *s)
 {
-    assert(ash_tidle);
     if (s[0] != '~')
         return NULL;
     if (s[1] == '/')
         ++s;
-    memset(ash_tidle, 0, ash_env_get_pwd_max());
-    sprintf(ash_tidle, "%s%c%s", ash_env_get_home(), '/', ++s);
-    return ash_tidle;
+
+    size_t max = ash_env_get_pwd_max();
+    char *fmt = ash_alloc(max + 1);
+    memset(fmt, 0, max + 1);
+    sprintf(fmt, "%s%c%s", ash_env_get_home(), '/', ++s);
+    return fmt;
 }
 
-void ash_ops_init(void)
+/* todo: check hex */
+
+int ash_stoi_ck(const char *s)
 {
-    size_t max = ash_env_get_pwd_max();
-    ash_tidle = ash_alloc(max);
+    char c;
+    int ck = 1;
+    while ((c = *(s++))){
+        if (!(c >= '0' && c <= '9'))
+            ck = 0;
+    }
+    return ck;
 }
