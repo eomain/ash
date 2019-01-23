@@ -26,6 +26,7 @@
 #include "echo.h"
 #include "env.h"
 #include "exec.h"
+#include "exit.h"
 #include "io.h"
 #include "ops.h"
 #include "read.h"
@@ -34,40 +35,37 @@
 #include "unset.h"
 #include "var.h"
 
-static const char *builtin_msg[] = {
-    [  ASH_BUILTIN_BUILTIN ]    =   "list built-in commands",
-    [  ASH_BUILTIN_EXIT    ]    =   "[status] exit shell session",
-    [  ASH_BUILTIN_HELP    ]    =   "display help prompt"
-};
+
+static void ash_print_builtin_info(int, const char *);
+
+
+void ash_print_err_builtin(const char *pname, const char *msg)
+{
+    ash_print("%s: error: %s \n", pname, msg);
+}
 
 static const char *ash_builtin_usage(void)
 {
-    return builtin_msg[ASH_BUILTIN_BUILTIN];
+    return "display built-in commands";
 }
 
-static const char *ash_exit_usage(void)
+static int ash_builtin(int argc, const char * const *argv)
 {
-    return builtin_msg[ASH_BUILTIN_EXIT];
+    ash_print_builtin();
+    return 0;
 }
 
 static const char *ash_help_usage(void)
 {
-    return builtin_msg[ASH_BUILTIN_HELP];
+    return "display help prompt";
 }
 
-void ash_print_err_builtin(const char *pname, const char *msg)
-{
-    ash_print(PNAME ": %s: error: %s \n", pname, msg);
-}
-
-static void ash_print_builtin_info(int, const char *);
-
-static int ash_builtin(int argc, const char * const *argv)
+static int ash_help(int argc, const char * const *argv)
 {
     int status;
 
     if (argc == 1)
-        ash_print_builtin();
+        ash_print_help();
     else {
         if ((status = ash_builtin_find(argv[1])) != -1)
             ash_print_builtin_info(status, argv[1]);
@@ -76,28 +74,6 @@ static int ash_builtin(int argc, const char * const *argv)
             return 1;
         }
     }
-    return 0;
-}
-
-static int ash_exit(int argc, const char * const *argv)
-{
-    int status = 0;
-
-    if (argc > 1){
-        if (ash_stoi_ck(argv[1])){
-            status = atoi(argv[1]);
-            ash_set_status(status);
-        }
-    }
-
-    ash_puts(argv[0]);
-    ash_logout();
-    return status;
-}
-
-static int ash_help(int argc, const char * const *argv)
-{
-    ash_print_help();
     return 0;
 }
 
@@ -288,11 +264,9 @@ static void ash_print_builtin_info(int o, const char *s)
 
 void ash_print_builtin(void)
 {
-    ash_puts("built-in commands:");
-    ash_puts("type builtin [command] for more info\n");
     for (size_t i = 0; i < ASH_BUILTIN_NO; ++i){
         if (!usage[i].usage)
             continue;
-        ash_print("%s     \t\t:: %s\n", usage[i].name, usage[i].usage());
+        ash_print("%8s     \t:: %s\n", usage[i].name, usage[i].usage());
     }
 }
