@@ -19,50 +19,141 @@
 #include "echo.h"
 #include "io.h"
 
+enum {
+    /* no trailing newline */
+    LINE   = 1 << 1,
+    /* remove whitespace */
+    SPACE  = 1 << 2,
+    /* format string */
+    FORMAT = 1 << 3
+};
+
 const char *ash_echo_usage(void)
 {
-    return "print to stdout";
+    return "print formatted string to standard out";
+}
+
+static int ash_echo_option(const char *s)
+{
+    char c;
+    int options = 0;
+
+    while ((c = *(s++))){
+        switch (c){
+            case 'n':
+                options |= LINE;
+                break;
+            case 's':
+                options |= SPACE;
+                break;
+            case 'f':
+                options |= FORMAT;
+                break;
+
+            default:
+                return 0;
+        }
+    }
+
+    return options;
+}
+
+static void ash_echo_format(const char *fmt)
+{
+    char c;
+
+    while ((c = *fmt++)){
+        if (c == '\\'){
+            c = *fmt;
+            switch (c){
+                case 'a':
+                    ash_putchar('\a');
+                    break;
+
+                case 'b':
+                    ash_putchar('\b');
+                    break;
+
+                case 'n':
+                    ash_putchar('\n');
+                    break;
+
+                case 'r':
+                    ash_putchar('\r');
+                    break;
+
+                case 'f':
+                    ash_putchar('\f');
+                    break;
+
+                case 't':
+                    ash_putchar('\t');
+                    break;
+
+                case 'v':
+                    ash_putchar('\v');
+                    break;
+
+                case '\\':
+                    ash_putchar('\\');
+                    break;
+
+                default:
+                    ash_putchar('\\');
+                    continue;
+            }
+            fmt++;
+        } else
+            ash_putchar(c);
+    }
 }
 
 int ash_echo(int argc, const char * const *argv)
 {
-    /* add newline */
-    char n = 1;
-    /* add whitespace */
-    char s = 1;
-
-    int i = 1;
+    int start = 1;
+    int options = 0;
 
     if(argc > 1){
-        while (i < argc){
-            const char *a = argv[i];
-            if (a[0] == '-'){
-                switch (a[1]){
-                    case 'n':
-                        n = 0;
-                        ++i;
-                        break;
-                    case 's':
-                        s = 0;
-                        ++i;
-                        break;
+        const char *opt;
+        for (int i = 1; i < argc; ++i){
+            opt = argv[i];
+
+            if (opt[0] == '-'){
+                int n;
+                if ((n = ash_echo_option(&opt[1]))){
+                    options |= n;
+                    start++;
                 }
             } else
                 break;
         }
 
-        const char *fmt = s == 0 ? "%s": "%s ";
+        const char *fmt = options & SPACE ? "%s": "%s ";
 
-        if (i < argc){
-            for (; i < argc -1; ++i)
-                ash_print(fmt, argv[i]);
-            ash_print(argv[argc - 1]);
+        if (start < argc){
+
+            if (options & FORMAT){
+                for (; start < argc -1; ++start){
+                    ash_echo_format(argv[start]);
+                    if (!(options & SPACE))
+                        ash_putchar(' ');
+                }
+                ash_echo_format(argv[argc - 1]);
+
+            } else {
+                for (; start < argc -1; ++start)
+                    ash_print(fmt, argv[start]);
+                ash_print(argv[argc - 1]);
+            }
         }
 
     }
 
-    if (n == 1)
+    if (!(options & LINE))
         ash_putchar('\n');
 
     return 0;
 }
+
+
+void ash_echo_help(void);
