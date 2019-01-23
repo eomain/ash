@@ -106,7 +106,7 @@ int ash_exec_set_path(void)
 
 static void ash_print_err_command(const char *command, const char *msg)
 {
-    ash_print(PNAME ": error: %s: %s \n", command, msg);
+    ash_print(PNAME ": %s: %s \n", command, msg);
 }
 
 static const char *ash_exec_signal(int e_status);
@@ -120,17 +120,19 @@ static int ash_exec(const char *p, char *const argv[])
     if (pid == -1)
         ash_print_errno(argv[0]);
     else if (pid == 0){
+
         if (execvp(p, argv) == -1)
             ash_print_err_command(argv[0], "no such command!");
         _exit(0);
     }
     else {
+
         wait(&status);
         if (WIFSIGNALED(status))
             ash_print("%s %s\n", ash_exec_signal(WTERMSIG(status)), argv[0]);
     }
 
-    ash_exec_set_exit(status);
+    ash_exec_set_exit(WEXITSTATUS(status));
     return status;
 }
 
