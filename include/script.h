@@ -17,11 +17,14 @@
 #ifndef ASH_SCRIPT
 #define ASH_SCRIPT
 
-#define ASH_PROFILE ".ash_profile"
-#define ASH_HISTORY ".ash_history"
+#define ASH_PROFILE "~.ash_profile"
+#define ASH_LOGOUT  "~.ash_logout"
+#define ASH_HISTORY "~.ash_history"
 
 #define DEFAULT_HISTORY_SIZE 500
 
-extern int ash_script_load(const char *);
+extern int ash_profile(void);
+extern int ash_logout_script(void);
+extern int ash_script_load(const char *, int);
 
 #endif
