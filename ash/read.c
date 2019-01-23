@@ -28,37 +28,12 @@
 
 const char *ash_read_usage(void)
 {
-    return "read input from standard out";
+    return "read input from standard input";
 }
 
-int ash_read(int argc, const char * const *argv)
+static int ash_read_input(const char *var)
 {
-    int status = 0;
-    int i = 1;
-    const char *prompt = NULL;
-    const char *input = NULL;
-
-    for (; i < argc; ++i){
-        const char *a = argv[i];
-
-        if (a[0] == '-' && strlen(a) == 2){
-            char c = a[1];
-
-            if (c == 'p'){
-                if (i < argc)
-                    prompt = argv[++i];
-            }
-
-        } else {
-            input = argv[i];
-            break;
-        }
-    }
-
-    if (prompt)
-        ash_print(prompt);
-
-    if (input){
+    if (var){
         char *buf = ash_alloc(MAX_INPUT_SIZE);
         if (buf){
             if (ash_scan_buffer(buf, MAX_INPUT_SIZE) == 0){
@@ -71,13 +46,45 @@ int ash_read(int argc, const char * const *argv)
                     }
                     buf = ash_realloc(buf, len);
                 }
-                ash_var_set(input, buf, ASH_DATA);
+                ash_var_set(var, buf, ASH_DATA);
             } else
-                status = -1;
+                return -1;
         } else
-            status = -1;
+            return -1;
     } else
         ash_scan();
 
-    return status;
+    return 0;
+}
+
+int ash_read(int argc, const char * const *argv)
+{
+    int status = 0;
+    int i = 1;
+    const char *prompt = NULL;
+    const char *var = NULL;
+
+    for (; i < argc; ++i){
+        const char *opt = argv[i];
+
+        if (opt[0] == '-' && strlen(opt) == 2){
+            char c = opt[1];
+
+            if (c == 'p'){
+                if (i < argc)
+                    prompt = argv[++i];
+            }
+
+        } else {
+            var = argv[i];
+            break;
+        }
+    }
+
+    if (prompt)
+        ash_print(prompt);
+
+    status = ash_read_input(var);
+
+    return status ? 1: 0;
 }
