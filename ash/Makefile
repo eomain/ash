@@ -5,14 +5,14 @@ OUT = ash
 
 CC = cc
 
-CFLAGS := -I ../include
+CFLAGS := -I ../include -O3
 
 BIN = ../bin
 
 OBJS = ash.o io.o env.o var.o builtin.o \
 	   lang.o mem.o script.o exec.o echo.o \
 	   cd.o sleep.o unset.o ops.o source.o \
-	   read.o
+	   read.o exit.o
 
 all: $(OBJS)
 	-@mkdir -p $(BIN)
