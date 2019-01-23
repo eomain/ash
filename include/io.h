@@ -19,7 +19,12 @@
 
 #include <stdarg.h>
 
-#define PROMPT '$'
+#define ASH_IO_READ       0
+#define ASH_IO_WRITE      1
+#define ASH_IO_READ_WRITE 2
+
+#define ASH_ALERT  0
+#define ASH_IGNORE 1
 
 /* ash error code used to set and print error message */
 enum ash_errno {
@@ -38,7 +43,7 @@ enum ash_errno {
     ASH_ERR_NO
 };
 
-extern const char *ash_open(const char *);
+extern const char *ash_open(const char *, int);
 
 extern char *ash_scan(void);
 extern int   ash_scan_buffer(char *, size_t);

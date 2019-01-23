@@ -43,10 +43,11 @@ static inline size_t fsize(FILE *fp)
     return len;
 }
 
-const char *ash_open(const char *name)
+const char *ash_open(const char *name, int err)
 {
     FILE *fp;
     fp = fopen(name, "r");
+
     if (fp != NULL){
         size_t len = fsize(fp);
         char *buf = ash_alloc(len + 1 * sizeof (char));
@@ -54,7 +55,8 @@ const char *ash_open(const char *name)
         fclose(fp);
         if (n == 1)
             return buf;
-    }
+    } else if (err == ASH_ALERT)
+        ash_print_errno(name);
 
     return NULL;
 }

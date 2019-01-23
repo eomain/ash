@@ -56,7 +56,7 @@ static const char *ash_init_scripts[ASH_INIT_SCRIPT] = {
 
 int ash_script_load(const char *script, int err)
 {
-    const char *ash_script = ash_open(script, ASH_IO_READ, err);
+    const char *ash_script = ash_open(script, err);
     int status = ash_script ? 0: -1;
     if (status == 0){
         size_t len = strlen(ash_script);
