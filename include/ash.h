@@ -19,13 +19,18 @@
 
 #define PNAME "ash"
 
+#define ASH_NAME "acorn shell"
+
 #define ASH_VERSION_MAJOR "0"
 #define ASH_VERSION_MINOR "1"
-#define ASH_VERSION_MICRO "5"
+#define ASH_VERSION_MICRO "6"
 
 #define ASH_VERSION ASH_VERSION_MAJOR "." \
                     ASH_VERSION_MINOR "." \
                     ASH_VERSION_MICRO
+
+#define ASH_BUILD_TYPE "(unstable)"
+#define ASH_BUILD_DATETIME __DATE__ " " __TIME__
 
 /* set ash exit status */
 extern void ash_set_status(int);
