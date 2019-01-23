@@ -24,11 +24,14 @@ const char *ash_unset_usage(void)
 
 int ash_unset(int argc, const char * const *argv)
 {
-    int status;
+    int status = 0;
+
     for (int i = 1; i < argc; ++i){
-        status = ash_var_unset(argv[i]);
-        if (status)
-            status = ash_func_unset(argv[i]);
+        if (ash_var_unset(argv[i])){
+            if (ash_func_unset(argv[i]))
+                status = 1;
+        }
     }
+
     return status;
 }
