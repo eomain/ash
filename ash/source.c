@@ -19,6 +19,7 @@
 
 #include "builtin.h"
 #include "env.h"
+#include "io.h"
 #include "script.h"
 #include "source.h"
 
@@ -32,8 +33,8 @@ int ash_source(int argc, const char * const *argv)
     int status = 0;
 
     for (int i = 1; i < argc; ++i){
-        if (!ash_script_load(argv[i]))
-            status = -1;
+        if (!ash_script_load(argv[i], ASH_IGNORE))
+            status = 1;
     }
 
     return status;
