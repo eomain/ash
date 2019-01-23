@@ -635,7 +635,8 @@ struct ash_var *ash_var_env_get(const unsigned char *key)
     if (ash_env){
         if (ash_stoi_ck(key)){
             int index = atoi(key);
-            return ash_var_env_local(key, index - 1);
+            if (index > 0)
+                return ash_var_env_local(key, index - 1);
         }
 
         size_t hash = ash_compute_hash(key);
