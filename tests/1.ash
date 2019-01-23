@@ -17,5 +17,20 @@
 
 # ash (acorn shell) test script
 
-# print hello world
-echo "hello world!"
+# if-else statement
+if [ true ]
+    echo "true"
+else
+    echo "false"
+end
+
+# while loop
+while [ true ]
+    echo "inside:" $PWD
+    break
+end
+
+# for loop
+for i in [ 0 to 10 ]
+    echo $ASH
+end

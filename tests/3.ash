@@ -17,5 +17,23 @@
 
 # ash (acorn shell) test script
 
-# print hello world
-echo "hello world!"
+# print a pattern
+
+main:
+    read -p "enter a pattern: " pattern
+
+    for i in [ 0 to 20 ]
+        for i in [ 0 to 20 ]
+            echo -n $pattern
+        end
+        echo
+    end
+
+    echo
+
+    unset pattern
+end
+
+while [ true ]
+    main()
+end

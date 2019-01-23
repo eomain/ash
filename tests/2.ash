@@ -17,5 +17,9 @@
 
 # ash (acorn shell) test script
 
-# print hello world
-echo "hello world!"
+# function
+main:
+    echo $1
+end
+
+main("inside a function")
