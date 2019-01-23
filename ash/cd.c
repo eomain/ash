@@ -30,20 +30,20 @@
 
 const char *ash_cd_usage(void)
 {
-    return "[dir] change directory";
+    return "change directory";
 }
 
 int ash_cd(int argc, const char * const *argv)
 {
-    int status;
+    int status = 0;
 
     if (argc > 1){
         const char *dir = argv[1];
-        if (*dir == '~')
-            dir = ash_ops_tidle(dir);
         status = chdir(dir);
-        if (status)
-            ash_print_err_builtin(argv[0], strerror(errno));
+        if (status){
+            ash_print("%s: error: '%s': %s\n", argv[0], dir, strerror(errno));
+            status = 1;
+        }
         else
             ash_env_pwd();
     }
