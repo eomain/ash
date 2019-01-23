@@ -19,9 +19,14 @@
 
 #include <stddef.h>
 
+#define ASH_GREETER "ASH_GREETER"
+
 #ifdef __unix__
     #define ASH_UNIX
 #endif
+
+extern const char *ash_env_get_greeter(void);
+extern void ash_env_prompt_default(void);
 
 extern int ash_check_root(void);
 extern void ash_prompt(void);
