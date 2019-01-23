@@ -20,6 +20,7 @@
 #include "builtin.h"
 #include "env.h"
 #include "io.h"
+#include "ops.h"
 #include "sleep.h"
 
 #ifdef ASH_UNIX
@@ -28,26 +29,22 @@
 
 const char *ash_sleep_usage(void)
 {
-    return "[sec] sleep for [sec] seconds";
+    return "put the program to sleep for [n] seconds";
 }
 
 int ash_sleep(int argc, const char * const *argv)
 {
-    int status;
-
-    if(argc == 1)
+    if(argc == 1){
         ash_print_err_builtin(argv[0], perr(ARG_MSG_ERR));
-    else {
-        status = 0;
-        for (size_t i = 0; i < strlen(argv[1]); ++i){
-            char c = argv[1][i];
-            if (!(c <= '9' && c >= '0'))
-                status = 1;
-        }
-        if (status == 0)
-            sleep(atoi(argv[1]));
-        else
-            ash_print_err_builtin(argv[0], perr(TYPE_ERR));
+        return 1;
     }
-    return status;
+
+    if (!ash_stoi_ck(argv[1])){
+        ash_print_err_builtin(argv[0], perr(TYPE_ERR));
+        return 1;
+    }
+
+    sleep(atoi(argv[1]));
+
+    return 0;
 }
