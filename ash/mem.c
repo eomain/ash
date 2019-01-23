@@ -25,31 +25,35 @@
 #include "io.h"
 #include "mem.h"
 
+
+static void ash_mem_err(void)
+{
+    ash_set_status(errno);
+    ash_abort(strerror(errno));
+}
+
 void *ash_alloc(size_t n)
 {
     assert( n > 0 );
 
     void *m = malloc(n);
-    if (!m){
-        ash_set_status(errno);
-        ash_abort(strerror(errno));
-    }
+    if (!m)
+        ash_mem_err();
     return m;
 }
 
 void *ash_realloc(void *m, size_t n)
 {
-    assert( m && n > 0 );
+    assert( m != NULL && n > 0 );
     m = realloc(m, n);
-    if (!m){
-        ash_set_status(errno);
-        ash_abort(strerror(errno));
-    }
+    if (!m)
+        ash_mem_err();
     return m;
 }
 
 void ash_free(void *m)
 {
+    assert(m != NULL);
     if (m)
         free(m);
 }
