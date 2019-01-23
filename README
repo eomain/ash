@@ -1,17 +1,100 @@
 
-ash: acorn shell
+ash: acorn shell (2018)
 
-ash:        source directory
-doc:        documentation
-include:    header files
-lib:        library
-share:      misc
-tests:      ash test scripts
+ash is a command shell interpreter. Commands can either be read directly from
+the user at the command prompt or from a given file, upon which they are evaluated
+and executed. You can use ash to write/run shell scripts with the following properties.
+Set and unset both atomic and composite (tuple) variables, evaluate expressions and use
+some common programming language constructs, such as if-else statements,
+loops (for and while) and functions.
 
-ash usage:
-    to display prompt:      help
-    to list builtins:       builtin
-    to print to stdout:     echo
+Please note that as of now ash does not have a stable release and some
+features that may be missing are still in development.
 
 
-author: eomain
+Project directories:
+
+    ash:        source directory
+    doc:        documentation
+    include:    header files
+    lib:        library
+    share:      misc
+    tests:      ash test scripts
+
+
+Install:
+
+    To install ash we can use the ash script 'install'.
+    If ash is not already installed then we first need to build ash
+    from source. The install script will by default install ash to
+    '/usr/local/bin' and the man page to '/usr/local/man/man1'. These
+    variables can be changed, but be careful if running as root.
+
+    To build ash. Type from the root directory:
+        `make ash`
+
+    To do the installation we must run ash as root:
+        `sudo ./bin/ash`
+
+    Once ash has started, run the install script:
+        `source install`
+
+    Exit from root session:
+        `exit`
+
+    Start new ash session:
+        `ash`
+
+    View the ash man page:
+        `man ash`
+
+
+Basic usage:
+
+    # to display prompt
+        help
+
+    # to list builtin commands
+        builtin
+
+    # to change directory
+        cd <directory>
+
+    # set a variable
+        var := "acorn"
+
+    # to print variable:
+        echo $var
+
+    # to evaluate an expression
+        [ 2 + 2 ]  # 4
+
+    # if statement
+        if [ true ]
+            read -p "enter name: " name
+            echo "welcome" $name
+        end
+
+    # for loop
+        for i in [ 0 to 10 ]
+            echo $ASH
+        end
+
+    # function
+        main:
+            echo $1
+        end
+
+        main("this is a function")
+
+    # load/import a script into the current shell
+        source <script>
+
+    # execute a script (needs ash to be installed on the path
+    # and must have execute permission)
+        ./script
+
+Author:
+    eomain
+
+acorn shell (2018)
