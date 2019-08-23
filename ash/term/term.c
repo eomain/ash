@@ -21,6 +21,7 @@
 #include "ash/mem.h"
 #include "ash/ops.h"
 #include "ash/type.h"
+#include "ash/unit.h"
 #include "ash/term/term.h"
 
 #define ASH_HISTORY_NAME "~.ash_history"
@@ -142,7 +143,7 @@ static void destroy(void)
     ash_term_clean(&term);
 }
 
-const struct ash_unit_init ash_uinit_term = {
+const struct ash_unit_module ash_module_term = {
     .init = init,
     .destroy = destroy
 };
