@@ -1,4 +1,4 @@
-#!/usr/bin/env ash
+#!/usr/bin/env -S ash -e
 
 # Copyright 2018 eomain
 # this program is licensed under the 2-clause BSD license
@@ -19,21 +19,32 @@
 
 # print a pattern
 
-main:
-    read -p "enter a pattern: " pattern
-
-    for i in [ 0 to 20 ]
-        for i in [ 0 to 20 ]
-            echo -n $pattern
+def display(pattern)
+    let range := 0 to 50;
+    for i in $range
+        for i in $range
+            echo -n $pattern;
         end
-        echo
+        echo;
     end
-
-    echo
-
-    unset pattern
+    echo;
 end
 
-while [ true ]
-    main()
+def main()
+
+    def input(prompt)
+        read -p $prompt input;
+        return $input;
+    end
+
+    while [ true ]
+        for n in 1 to 3
+            display(input("> enter a pattern: "));
+        end
+
+        if [ input("> exit? (y or n): ") = "y" ]
+            break;
+        end
+    end
+
 end

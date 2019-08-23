@@ -18,8 +18,8 @@
 # ash (acorn shell) test script
 
 # function
-main:
-    echo $1
+def main(var)
+    echo $var;
 end
 
-main("inside a function")
+main("inside a function");

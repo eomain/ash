@@ -19,18 +19,22 @@
 
 # if-else statement
 if [ true ]
-    echo "true"
+    echo "true";
 else
-    echo "false"
+    echo "false";
 end
+
+# using the ternary operator
+
+echo ? [ true ] "true": "false";
 
 # while loop
 while [ true ]
-    echo "inside:" $PWD
-    break
+    echo "inside:" $PWD;
+    break;
 end
 
 # for loop
-for i in [ 0 to 10 ]
-    echo $ASH
+for i in 0 to 10
+    echo $ASH;
 end

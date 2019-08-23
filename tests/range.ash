@@ -1,4 +1,4 @@
-#!/usr/bin/env -S ../build/ash/ash -e
+#!/usr/bin/env -S ash -e
 
 # Copyright 2018 eomain
 # this program is licensed under the 2-clause BSD license
