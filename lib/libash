@@ -1,0 +1,408 @@
+#!/usr/bin/env ash
+
+# Copyright 2018 eomain
+# this program is licensed under the 2-clause BSD license
+# see COPYRIGHT for the full license info
+
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+# ash (acorn shell) script
+
+# libash - ash standard library
+
+# Used to check if library has been imported.
+let LIBASH := true;
+
+# libash library name
+let LIBASH_NAME := "libash";
+
+# libash major version.
+let LIBASH_MAJOR := "0";
+
+# libash minor version.
+let LIBASH_MINOR := "1";
+
+# libash micro version.
+let LIBASH_MICRO := "0";
+
+# Full version of the library in use.
+let LIBASH_VERSION := "{ $LIBASH_MAJOR }.{ $LIBASH_MINOR }.{ $LIBASH_MICRO }";
+
+# Returns the library name.
+# Args(0)
+# Return: String
+def name()
+    return $LIBASH_NAME;
+end
+
+# Returns the library version.
+# Args(0)
+# Return: String
+def version()
+    return $LIBASH_VERSION;
+end
+
+# Operation exit success.
+let Ok := `0`;
+
+# Operation exit failure.
+let Err := `1`;
+
+# Apply function on exit success.
+# Args(1): Function
+# Return: Int
+def ok(function)
+    let status := env::status();
+    if [ $status = $Ok ]
+        $function($status);
+    end
+    return $status;
+end
+
+# Apply function on exit failure.
+# Args(1): Function
+# Return: Int
+def err(function)
+    let status := env::status();
+    if [ $status != $Ok ]
+        $function($status);
+    end
+    return $status;
+end
+
+# Numeric sequence of range 0-9.
+let NUMERIC := `0 to 9`;
+
+# Character sequence of
+# lower case alphabet.
+let ALPHA_LOWER := (
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z"
+);
+
+# Character sequence of
+# upper case alphabet.
+let ALPHA_UPPER := (
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z"
+);
+
+# Applies a function to an
+# iterable sequence.
+# Args(2): (Any, Function)
+# Return: none
+def each(iter, func)
+    for e in $iter
+        $func($e);
+    end
+end
+
+# Set ash search path.
+if [ $LIBDIR ]
+    ASH_SEARCH_PATH := ($PWD, $HOME, $LIBDIR);
+end
+
+# Import a list of modules in search path.
+# Args(n): (String, ...)
+# Return: none
+def import()
+    for module in $@
+        source $module;
+        let status := err(|s|
+            for path in $ASH_SEARCH_PATH
+                source cat($path, "/", $module);
+                if [ err() ]
+                    break;
+                end
+            end
+        end);
+
+        #if [ !$status ]
+        #    return;
+        #end
+    end
+end
+
+# `io` Module.
+# : Standard io functions.
+mod io
+
+    # Print a list of formatted strings
+    # followed by a newline.
+    # Args(n): (Any, ...)
+    # Return: none
+    def print()
+        for fmt in $@
+            echo -snf $fmt;
+        end
+        echo;
+    end
+
+    # Scan and return input from standard out.
+    # Args(1): (Any)
+    # Return: String
+    def scan(prompt)
+        echo -snf $prompt;
+        read input;
+        return $input;
+    end
+
+end
+
+# `assert` Module.
+mod assert
+
+    # Assert `a` equal to `b`.
+    # Args(2): (Any, Any)
+    # Return: none
+    def eq(a, b)
+        if [ $a != $b ]
+            io::print("assertion failed!: `", $a, " = ", $b, "`.");
+            exit $Err;
+        end
+    end
+
+    # Assert `a` not equal to `b`.
+    # Args(2): (Any, Any)
+    # Return: none
+    def ne(a, b)
+        if [ $a = $b ]
+            io::print("assertion failed!: `", $a, " != ", $b, "`.");
+            exit $Err;
+        end
+    end
+
+end
+
+# Concatenate a set of strings.
+# Args(n): (Any, ...)
+# Return: String
+def cat()
+    let cat := "";
+
+    for str in $@
+        let cat := `$cat + $str`;
+    end
+
+    return $cat;
+end
+
+# `os` Module.
+# : Function related to the host os.
+mod os
+
+    # `name` Module
+    # : Collection of os label names.
+    mod name
+        let UNIX := "unix";
+    end
+
+    # Returns the 'family' name of the host os.
+    # e.g. 'unix'
+    # Args(0):
+    # Return: String
+    def family()
+        return $_OS_FAMILY_;
+    end
+
+    # Returns true if the host os family is 'unix'.
+    # Args(0):
+    # Return: Boolean
+    def is_unix()
+        return ? [ family() = name::$UNIX ] true: false;
+    end
+
+end
+
+# `path` Module
+# : Path building functions.
+mod path
+
+    # The begining of a path
+    let BEGIN := match [ os::family() ]
+        os::name::$UNIX => ""
+    end;
+
+    # Type of path delimiter for the host os
+    let DELIM := match [ os::family() ]
+        os::name::$UNIX => "/"
+    end;
+
+    # Joins directory paths.
+    # Args(2): (String, (String, ...))
+    # Return: String
+    def build(begin, paths)
+        let path := $begin;
+
+        for dir in $paths
+            path := "{ $path }{ $DELIM }{ $dir }";
+        end
+
+        return $path;
+    end
+
+    # Builds an absolute file system path for the host os.
+    # Args(n): (String, ...)
+    # Return: String
+    def abs()
+        return build($BEGIN, $@);
+    end
+
+    # Builds an relative file system path for the host os.
+    # Args(n): (String, ...)
+    # Return: String
+    def rel()
+        return build($PWD, $@);
+    end
+
+end
+
+# `env` Module.
+# : Functions to retrieve or modify variables
+#   of the shell itself.
+mod env
+
+    # Set the shells primary command prompt.
+    # This is by default set to `$`.
+    # Args(1): Any
+    # Return: none
+    def set_prompt(var)
+        _ps1_ := $var;
+    end
+
+    # Set the shells secondary command prompt.
+    # This is by default set to `|`.
+    # Args(1): Any
+    # Return: none
+    def set_prompt2(var)
+        _ps2_ := $var;
+    end
+
+    # Returns the exit status of the last command.
+    # Args(0):
+    # Return: Int
+    def status()
+        return $__EXIT__;
+    end
+
+    # Returns the result of the last built-in command.
+    # Args(0):
+    # Return: Any
+    def result()
+        return $__RESULT__;
+    end
+
+    # Returns as a boolean if the current user is
+    # root.
+    # Args(0):
+    # Return: String
+    def root()
+        return $__ROOT__;
+    end
+
+    # Returns the version of the shell
+    # that is currently running.
+    # e.g. "0.1.0"
+    # Args(0):
+    # Return: String
+    def version()
+        return $ASH_VERSION;
+    end
+
+end
+
+# `time` Module
+# : Time management functions.
+mod time
+
+    # Halts execution of the running shell
+    # for `secs` milliseconds.
+    # Args(1): Int
+    # Return: none
+    def sleep(secs)
+        if [ os::is_unix() ]
+            sleep `$secs * 1000`;
+        else
+            sleep $secs;
+        end
+    end
+
+end
+
+# `util` Module
+# : Collection of useful utility functions.
+mod util
+
+    # Returns a random number.
+    # Args(0)
+    # Return: Int
+    def rand()
+        rand;
+        return env::result();
+    end
+
+end
+
+# Displays library info. When executed as a script.
+if [ $__MAIN__ ]
+    echo name() version();
+    exit;
+end
