@@ -108,7 +108,6 @@ static void dealloc(struct ash_obj *obj)
 
     tuple->len = 0;
     tuple->buf = 0;
-    ash_free(tuple);
 }
 
 static void ash_tuple_resize(struct ash_tuple *tuple, size_t n)
