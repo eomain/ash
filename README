@@ -21,34 +21,6 @@ Project directories:
     share:      misc
     tests:      ash test scripts
 
-
-Install:
-
-    To install ash we can use the ash script 'install'.
-    If ash is not already installed then we first need to build ash
-    from source. The install script will by default install ash to
-    '/usr/local/bin' and the man page to '/usr/local/man/man1'. These
-    variables can be changed, but be careful if running as root.
-
-    To build ash. Type from the root directory:
-        `make ash`
-
-    To do the installation we must run ash as root:
-        `sudo ./bin/ash`
-
-    Once ash has started, run the install script:
-        `source install`
-
-    Exit from root session:
-        `exit`
-
-    Start new ash session:
-        `ash`
-
-    View the ash man page:
-        `man ash`
-
-
 Basic usage:
 
     # to display prompt
@@ -67,7 +39,7 @@ Basic usage:
         echo $var
 
     # to evaluate an expression
-        [ 2 + 2 ]  # 4
+        ` 2 + 2 `  # 4
 
     # if statement
         if [ true ]
@@ -76,13 +48,13 @@ Basic usage:
         end
 
     # for loop
-        for i in [ 0 to 10 ]
+        for i in 0 to 10
             echo $ASH
         end
 
     # function
-        main:
-            echo $1
+        def main(var)
+            echo $var
         end
 
         main("this is a function")
