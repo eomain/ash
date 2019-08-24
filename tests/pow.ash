@@ -81,7 +81,7 @@ def main()
     echo "math::cube(12):"    math::cube(12);
     echo "math::cube(`-25`):" math::cube(`-25`);
     echo "math::cube(15):"    math::cube(15);
-    echo "math::cube(math::abs(`-9`)):" math::cube(math::abs(`-7`));
+    echo "math::cube(math::abs(`-9`)):" math::cube(math::abs(`-9`));
     echo;
     echo "math::sqrt(1):"   math::sqrt(1);
     echo "math::sqrt(16):"  math::sqrt(16);
