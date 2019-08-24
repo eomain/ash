@@ -828,8 +828,6 @@ runtime_call(struct ash_runtime_context *context, struct ast_call *call)
     else if ((obj = runtime_eval_var(context, call->var)))
         ret = ash_func_exec(obj, env, argv);
 
-    ash_obj_dec_rc(argv);
-
     return ret;
 }
 
