@@ -40,7 +40,7 @@ static ash_flag ash_echo_option(const char *s)
     ash_flag options = ASH_FLAG_RESET;
 
     while ((c = *(s++))) {
-        switch (c){
+        switch (c) {
             case 'n':
                 options |= LINE;
                 break;
