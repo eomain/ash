@@ -28,10 +28,6 @@
 
 extern const struct ash_unit_module ash_module_exec;
 
-extern struct ash_obj *ash_exec_get_exit(void);
-extern void ash_exec_set_exit(struct ash_obj *);
-extern void ash_exec_set_exit_no(int);
-
 /* the type of redirection within a command */
 enum ash_exec_redirect {
     /* no redirection takes place */
