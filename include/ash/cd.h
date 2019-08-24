@@ -14,8 +14,8 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_CD
-#define ASH_CD
+#ifndef ASH_CD_H
+#define ASH_CD_H
 
 extern const char *ash_cd_usage(void);
 extern int ash_cd(int, const char * const *);

@@ -21,87 +21,104 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ash.h"
-#include "builtin.h"
-#include "env.h"
-#include "io.h"
-#include "var.h"
+#include "ash/ash.h"
+#include "ash/command.h"
+#include "ash/env.h"
+#include "ash/exec.h"
+#include "ash/int.h"
+#include "ash/io.h"
+#include "ash/macro.h"
+#include "ash/obj.h"
+#include "ash/signal.h"
+#include "ash/str.h"
+#include "ash/type.h"
+#include "ash/unit.h"
+#include "ash/var.h"
+#include "ash/lang/runtime.h"
 
-#ifdef ASH_UNIX
+#ifdef ASH_PLATFORM_POSIX
     #include <sys/types.h>
     #include <sys/wait.h>
     #include <unistd.h>
 #endif
 
-#define ASH_EXIT_STATUS 5
+#define ASH_STDIN  0
+#define ASH_STDOUT 1
 
-char e_status[ASH_EXIT_STATUS] = { 0 };
-
-void ash_exec_set_exit(int exit)
-{
-    memset(e_status, 0, ASH_EXIT_STATUS);
-    sprintf(e_status, "%d", exit);
-    ash_var_set("?", e_status, ASH_STATIC);
-}
+#define ASH_EXIT_DEFAULT 0
+#define ASH_EXIT_SUCCESS EXIT_SUCCESS
+#define ASH_EXIT_FAILURE EXIT_FAILURE
 
 #define ASH_DEFAULT_DIR_MAX 100
 
-size_t n_paths = 0;
-const char *sysdir[ ASH_DEFAULT_DIR_MAX ];
 
-static inline void ash_exec_clear_path(void);
-
-static void ash_exec_path(int len, const char **path)
+const char *ash_exec_usage(void)
 {
-    ash_exec_clear_path();
-
-    for (int i = 0; i < len && i < ASH_DEFAULT_DIR_MAX; ++i)
-        sysdir[n_paths++] = path[i];
+    return "execute command";
 }
 
-static inline void ash_exec_clear_path(void)
+int ash_exec(int argc, const char * const *argv)
 {
-    if (n_paths > 0){
-        memset((void *) sysdir, 0, ASH_DEFAULT_DIR_MAX);
-        n_paths = 0;
-    }
-}
+    if (argc == 1)
+        return ASH_STATUS_OK;
+    else if (argc > 1) {
+        const char *prog = argv[1];
 
-static int str_get_occurance(const char *s, char c)
-{
-    int n = 0;
-    while ((*s++) != '\0'){
-        if (*s == c)
-            n++;
-    }
-    return n;
-}
+        if (argc == 2) {
+            char * const args[] = { (char *const) prog, NULL };
+            if (execvp(prog, args))
+                return ASH_STATUS_ERR;
+        } else {
+            const char *args[argc];
+            args[argc - 1] = NULL;
 
-int ash_exec_set_path(void)
-{
-    char *path = ash_var_clone_value(ash_var_find_builtin(ASH_PATH));
-    if (!path)
-        return -1;
+            for (int i = 0; i < argc - 1; ++i)
+                args[i] = argv[i + 1];
 
-    char tok = ':';
-    int n = str_get_occurance(path, tok);
-
-    if (n > 0){
-        char *paths[n];
-        paths[0] = path;
-        int index = 1;
-        for (char *s = path; *s != '\0'; ++s){
-            if (*s == tok){
-                paths[index++] = (s + 1);
-                *s = '\0';
-            }
+            if (execvp(prog, (char *const *)args))
+                return ASH_STATUS_ERR;
         }
+    }
 
-        ash_exec_path(n, (const char **)paths);
-    } else
-        ash_exec_path(1, (const char **)&path);
+    return ASH_STATUS_OK;
+}
 
-    return 0;
+struct ash_exec_env {
+    struct ash_obj *exit;
+    struct ash_var *vexit;
+    struct ash_var *result;
+};
+
+static struct ash_exec_env env;
+
+static void
+ash_exec_env_exit(struct ash_exec_env *env, int status)
+{
+    ash_int_set(env->exit, status);
+    ash_var_bind(env->vexit, env->exit);
+}
+
+static void
+ash_exec_env_result(struct ash_exec_env *env, struct ash_obj *obj)
+{
+    if (!obj) {
+        if (env->result)
+            ash_var_unbind(env->result);
+        return;
+    }
+
+    if (env->result)
+        ash_var_bind_override(env->result, obj);
+    else
+        env->result = ash_var_set(ASH_SYMBOL_RESULT, obj);
+}
+
+static void
+ash_exec_env_init(struct ash_exec_env *env)
+{
+    env->exit = ash_int_from(ASH_EXIT_DEFAULT);
+    env->vexit = ash_var_set(ASH_SYMBOL_EXIT, env->exit);
+    env->result = NULL;
 }
 
 static void ash_print_err_command(const char *command, const char *msg)
@@ -109,61 +126,177 @@ static void ash_print_err_command(const char *command, const char *msg)
     ash_print(PNAME ": %s: %s \n", command, msg);
 }
 
-static const char *ash_exec_signal(int e_status);
-
-static int ash_exec(const char *p, char *const argv[])
+static int
+ash_exec_child(int input, int output,
+               const char *prog, char *const argv[])
 {
     pid_t pid;
     int status;
 
     pid = fork();
-    if (pid == -1)
-        ash_print_errno(argv[0]);
-    else if (pid == 0){
+    if (pid == -1) {
+        ash_print_err("unable to fork process!");
+        return -1;
+    }
+    else if (pid == 0) {
 
-        if (execvp(p, argv) == -1)
-            ash_print_err_command(argv[0], "no such command!");
+        if (input != ASH_STDIN) {
+            dup2(input, ASH_STDIN);
+            close(input);
+        }
+
+        if (output != ASH_STDOUT) {
+            dup2(output, ASH_STDOUT);
+            close(output);
+        }
+
+        if (execvp(prog, argv) == -1) {
+            const char *msg = (errno == ENOENT) ?
+                "Unrecognized command": strerror(errno);
+            ash_print_err_command(argv[0], msg);
+        }
         _exit(0);
     }
     else {
-
         wait(&status);
         if (WIFSIGNALED(status))
-            ash_print("%s %s\n", ash_exec_signal(WTERMSIG(status)), argv[0]);
+            ash_print("%s %s\n", ash_signal_get(WTERMSIG(status)), argv[0]);
     }
 
-    ash_exec_set_exit(WEXITSTATUS(status));
+    status = WEXITSTATUS(status);
+    ash_exec_env_result(&env, NULL);
+    ash_exec_env_exit(&env, status);
     return status;
 }
 
-int ash_exec_command(int argc, const char **argv)
+enum ash_exec_io {
+    ASH_STDIO = 0,
+    ASH_IN    = 1 << 1,
+    ASH_OUT   = 1 << 2
+};
+
+static int
+ash_exec_builtin(int input, int output,
+                 enum ash_command_name command,
+                 int argc, char *const *argv)
 {
-    if (!argv[0])
-        return -1;
+    int status;
+    int in, out;
+    enum ash_exec_io io = ASH_STDIO;
+    struct ash_command_env env;
+
+    if (input != ASH_STDIN) {
+        in = dup(ASH_STDIN);
+        io |= ASH_IN;
+        dup2(input, ASH_STDIN);
+        close(input);
+    }
+
+    if (output != ASH_STDOUT) {
+        out = dup(ASH_STDOUT);
+        io |= ASH_OUT;
+        dup2(output, ASH_STDOUT);
+        close(output);
+    }
+
+    ash_command_env_init(&env, NULL);
+    status = ash_command_exec(
+        command, argc, (const char * const *)argv, &env
+    );
+
+    if (io & ASH_IN)
+        dup2(in, ASH_STDIN);
+
+    if (io & ASH_OUT)
+        dup2(out, ASH_STDOUT);
+
+    return status;
+}
+
+int ash_exec_pipeline(int len, struct ash_exec **progs)
+{
+    int fd[2];
+    int input = ASH_STDIN;
+    int argc;
+    const char *prog = NULL;
+    char *const *argv = NULL;
+
+    enum ash_command_name command;
+
+    if (len > 1) {
+        for (int i = 0; i < len - 1; ++i) {
+            if (pipe(fd) == -1) {
+                ash_print_err("unable to open pipe!");
+                return -1;
+            }
+
+            prog = progs[i]->argv[0];
+            argv = progs[i]->argv;
+
+            command = ash_command_find(prog);
+
+            if (ash_command_valid(command)) {
+                argc = progs[i]->argc;
+                ash_exec_builtin(input, fd[1], command, argc, argv);
+            } else {
+                ash_exec_child(input, fd[1], prog, argv);
+            }
+
+            close(fd[1]);
+
+            input = fd[0];
+        }
+    }
+
+    const int index = len -1;
+
+    prog = progs[index]->argv[0];
+    argv = progs[index]->argv;
+
+    if ((command = ash_command_find(prog)) != ASH_ERR_COMMAND) {
+        argc = progs[index]->argc;
+        return ash_exec_builtin(input, ASH_STDOUT, command, argc, argv);
+    } else
+        return ash_exec_child(input, ASH_STDOUT, prog, argv);
+}
+
+void ash_exec_command_status(int status, struct ash_command_env *cenv)
+{
+    struct ash_obj *result;
+    result = ash_command_env_get_result(cenv);
+    ash_exec_env_result(&env, result);
+    ash_exec_env_exit(&env, status);
+}
+
+int ash_exec_command(int argc, const char **argv, struct ash_runtime_env *renv)
+{
+    assert(argv[0]);
     assert(*argv[0]);
 
     int status;
-    int o;
-    if (( o = ash_builtin_find(argv[0])) != -1)
-        status = ash_builtin_exec(o, argc, argv);
-    else
-        status = ash_exec(argv[0], (char *const*)argv);
+    enum ash_command_name command;
+    struct ash_command_env env;
+    ash_command_env_init(&env, renv);
+
+    command = ash_command_find(argv[0]);
+
+    if (ash_command_valid(command)) {
+        status = ash_command_exec(command, argc, argv, &env);
+        ash_exec_command_status(status, &env);
+    } else {
+        status = ash_exec_child(ASH_STDIN, ASH_STDOUT,
+                                argv[0], (char *const*)argv);
+    }
 
     return status;
 }
 
-static const char *e_msg[] = {
-    [ SIGABRT ] = "(abort)",
-    [ SIGFPE  ] = "(floating point error)",
-    [ SIGILL  ] = "(illegal operation)",
-    [ SIGINT  ] = "(interrupt)",
-    [ SIGSEGV ] = "(segfault)",
-    [ SIGTERM ] = "(terminated)"
-};
-
-static const char *ash_exec_signal(int e_status)
+static void init(void)
 {
-    if (e_status < sizeof(e_msg) / sizeof(e_msg[0]))
-        return e_msg[e_status];
-    return e_msg[SIGTERM];
+    ash_exec_env_init(&env);
 }
+
+const struct ash_unit_module ash_module_exec = {
+    .init = init,
+    .destroy = NULL
+};

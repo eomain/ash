@@ -14,10 +14,12 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_READ
-#define ASH_READ
+#ifndef ASH_READ_H
+#define ASH_READ_H
+
+#include "ash/command.h"
 
 extern const char *ash_read_usage(void);
-extern int ash_read(int, const char * const *);
+extern int ash_read_env(int, const char * const *, struct ash_command_env *);
 
 #endif

@@ -14,12 +14,22 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_OPS
-#define ASH_OPS
+#ifndef ASH_OPS_H
+#define ASH_OPS_H
 
+#include <stddef.h>
+
+#include "ash/type.h"
+#include "ash/lang/runtime.h"
+
+extern const char *ash_ops_format(const char *, struct ash_runtime_env *);
 extern const char *ash_ops_tilde(const char *);
-extern void ash_ops_init(void);
 
-extern int ash_stoi_ck(const char *);
+extern size_t ash_strlen(const char *);
+extern const char *ash_strcpy(const char *);
+extern const char *ash_strcat(const char *, const char *);
+extern void ash_ops_fmt_num(char *, long, size_t);
+
+extern bool ash_stoi_check(const char *);
 
 #endif

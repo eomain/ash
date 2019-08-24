@@ -16,10 +16,11 @@
 
 #include <stddef.h>
 
-#include "echo.h"
-#include "io.h"
+#include "ash/ash.h"
+#include "ash/echo.h"
+#include "ash/io.h"
 
-enum {
+enum echo_flag_option {
     /* no trailing newline */
     LINE   = 1 << 1,
     /* remove whitespace */
@@ -33,25 +34,27 @@ const char *ash_echo_usage(void)
     return "print formatted string to standard out";
 }
 
-static int ash_echo_option(const char *s)
+static ash_flag ash_echo_option(const char *s)
 {
     char c;
-    int options = 0;
+    ash_flag options = ASH_FLAG_RESET;
 
-    while ((c = *(s++))){
+    while ((c = *(s++))) {
         switch (c){
             case 'n':
                 options |= LINE;
                 break;
+
             case 's':
                 options |= SPACE;
                 break;
+
             case 'f':
                 options |= FORMAT;
                 break;
 
             default:
-                return 0;
+                return ASH_FLAG_RESET;
         }
     }
 
@@ -62,10 +65,10 @@ static void ash_echo_format(const char *fmt)
 {
     char c;
 
-    while ((c = *fmt++)){
-        if (c == '\\'){
+    while ((c = *fmt++)) {
+        if (c == '\\') {
             c = *fmt;
-            switch (c){
+            switch (c) {
                 case 'a':
                     ash_putchar('\a');
                     break;
@@ -111,16 +114,16 @@ static void ash_echo_format(const char *fmt)
 int ash_echo(int argc, const char * const *argv)
 {
     int start = 1;
-    int options = 0;
+    ash_flag options = ASH_FLAG_RESET;
 
-    if(argc > 1){
+    if (argc > 1) {
         const char *opt;
-        for (int i = 1; i < argc; ++i){
+        for (int i = 1; i < argc; ++i) {
             opt = argv[i];
 
-            if (opt[0] == '-'){
+            if (opt[0] == '-') {
                 int n;
-                if ((n = ash_echo_option(&opt[1]))){
+                if ((n = ash_echo_option(&opt[1]))) {
                     options |= n;
                     start++;
                 }
@@ -130,10 +133,10 @@ int ash_echo(int argc, const char * const *argv)
 
         const char *fmt = options & SPACE ? "%s": "%s ";
 
-        if (start < argc){
+        if (start < argc) {
 
-            if (options & FORMAT){
-                for (; start < argc -1; ++start){
+            if (options & FORMAT) {
+                for (; start < argc -1; ++start) {
                     ash_echo_format(argv[start]);
                     if (!(options & SPACE))
                         ash_putchar(' ');
@@ -152,7 +155,7 @@ int ash_echo(int argc, const char * const *argv)
     if (!(options & LINE))
         ash_putchar('\n');
 
-    return 0;
+    return ASH_STATUS_OK;
 }
 
 

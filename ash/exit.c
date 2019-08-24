@@ -16,28 +16,34 @@
 
 #include <stdlib.h>
 
-#include "ash.h"
-#include "exit.h"
-#include "io.h"
-#include "ops.h"
+#include "ash/ash.h"
+#include "ash/exit.h"
+#include "ash/ops.h"
+#include "ash/session.h"
 
 const char *ash_exit_usage(void)
 {
     return "exit shell session";
 }
 
+static inline int exit_status(const char *s)
+{
+    if (ash_stoi_check(s))
+        return atoi(s);
+    return 0;
+}
+
 int ash_exit(int argc, const char * const *argv)
 {
     int status = 0;
+    struct ash_session *session;
 
-    if (argc > 1){
-        if (ash_stoi_ck(argv[1])){
-            status = atoi(argv[1]);
-            ash_set_status(status);
-        }
-    }
+    if (argc > 1)
+        status = exit_status(argv[1]);
+    session = ash_session_default();
 
-    ash_puts(argv[0]);
-    ash_logout();
+    ash_session_set_status(session, status);
+    ash_session_quick_shutdown(session);
+
     return status;
 }

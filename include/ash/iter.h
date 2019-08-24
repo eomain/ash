@@ -1,0 +1,37 @@
+/* Copyright 2018 eomain
+   this program is licensed under the 2-clause BSD license
+   see COPYING for the full license info
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#ifndef ASH_ITER_H
+#define ASH_ITER_H
+
+#include <stddef.h>
+
+#include "ash/obj.h"
+#include "ash/type.h"
+
+struct ash_iter {
+    size_t pos;
+    struct ash_obj *value;
+    struct option opt;
+};
+
+extern void ash_iter_init(struct ash_iter *, struct ash_obj *);
+
+extern struct ash_obj *ash_iter_next(struct ash_iter *);
+
+extern bool ash_iter_hasnext(struct ash_iter *);
+
+#endif

@@ -14,11 +14,50 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_EXEC
-#define ASH_EXEC
+#ifndef ASH_EXEC_H
+#define ASH_EXEC_H
 
-extern int ash_exec_command(int, const char **);
-extern void ash_exec_set_exit(int);
+#include "ash/ash.h"
+#include "ash/obj.h"
+#include "ash/type.h"
+#include "ash/unit.h"
+#include "ash/var.h"
+
+#define ASH_SYMBOL_EXIT "__EXIT__"
+#define ASH_SYMBOL_RESULT "__RESULT__"
+
+extern const struct ash_unit_module ash_module_exec;
+
+extern struct ash_obj *ash_exec_get_exit(void);
+extern void ash_exec_set_exit(struct ash_obj *);
+extern void ash_exec_set_exit_no(int);
+
+/* the type of redirection within a command */
+enum ash_exec_redirect {
+    /* no redirection takes place */
+    ASH_DIRECT,
+    /* `>` redirect to file */
+    ASH_REDIRECTION,
+    /* `<` redirect from file */
+    ASH_INDIRECTION,
+    /* `|>` redirect between commands */
+    ASH_PIPE
+};
+
+struct ash_exec {
+    int argc;
+    char *const *argv;
+    enum ash_exec_redirect redirect;
+};
+
+extern int ash_exec_pipeline(int, struct ash_exec **);
+
+extern const char *ash_exec_usage(void);
+extern int ash_exec(int, const char * const *);
+
+struct ash_runtime_env;
+
+extern int ash_exec_command(int, const char **, struct ash_runtime_env *);
 extern int ash_exec_set_path(void);
 
 #endif

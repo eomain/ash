@@ -14,44 +14,70 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
+#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "env.h"
-#include "exec.h"
-#include "io.h"
-#include "ops.h"
-#include "var.h"
+#include "ash/ash.h"
+#include "ash/env.h"
+#include "ash/exec.h"
+#include "ash/io.h"
+#include "ash/int.h"
+#include "ash/macro.h"
+#include "ash/mem.h"
+#include "ash/obj.h"
+#include "ash/ops.h"
+#include "ash/script.h"
+#include "ash/str.h"
+#include "ash/type.h"
+#include "ash/var.h"
 
 
-#ifdef ASH_UNIX
+#ifdef ASH_PLATFORM_POSIX
     #include <sys/types.h>
     #include <sys/wait.h>
     #include <pwd.h>
     #include <unistd.h>
+
+    #define DEFAULT_PATH_SIZE 225
+    #define MAX_HOST_SIZE 64
 #endif
 
 #define ASH_HOME_DIR "~"
 
 #define ASH_ENV_HOME  "HOME"
+#define ASH_ENV_LANG  "LANG"
+#define ASH_ENV_MAIL  "MAIL"
 #define ASH_ENV_PATH  "PATH"
 #define ASH_ENV_SHELL "SHELL"
 
-#define ASH_ENV_P1 "PS1"
-#define ASH_ENV_P2 "PS2"
+#define ASH_ENV_HOST  "HOST"
+#define ASH_ENV_PWD   "PWD"
+#define ASH_ENV_LOGNAME  "LOGNAME"
+
+#define ASH_ENV_P1 "_ps1_"
+#define ASH_ENV_P2 "_ps2_"
+
+#define ASH_ENV_ROOT "__ROOT__"
+
+#define ASH_ENV_PROFILE "/ash/profile"
 
 /* default value for prompt 1 */
-#define DEFAULT_P1 "\\u::\\h \\W|\\$ "
+#define DEFAULT_P1 "\\$ "
 /* default value for prompt 2 */
 #define DEFAULT_P2 "| "
 
+#define DEFAULT_USER '$'
+#define DEFAULT_ROOT '#'
+
 #define DEFAULT_UNAME "[?]"
-#define DEFAULT_HOME ""
-#define DEFAULT_HOST "[localhost]"
-#define DEFAULT_DIR ""
-#define DEFAULT_PATH_SIZE 225
-#define MAX_HOST_SIZE 64
+#define DEFAULT_HOME  ""
+#define DEFAULT_HOST  "[localhost]"
+#define DEFAULT_DIR   ""
+
+#define ROOT_UID 0
 
 /* global env variables */
 
@@ -71,61 +97,119 @@ static const char *host = DEFAULT_HOST;
 static const char *path = NULL;
 /* the user default shell  */
 static const char *shell = NULL;
+/* the terminal language */
+static const char *lang = NULL;
+/* the user default mail */
+static const char *mail = NULL;
+
 /* number of commands entered at the prompt */
 static size_t count = 0;
 
 /* user id */
-static int uid;
+static auid uid;
 /* if user is 'root' */
-static int root = 0;
+static bool root = false;
 
-
-int ash_check_root(void)
+void ash_env_profile(void)
 {
-    if ((uid = getuid()) == 0)
-        root = 1;
+    ash_script_load("/etc" ASH_ENV_PROFILE, false);
+}
+
+auid ash_env_uid(void)
+{
+    return uid;
+}
+
+apid ash_env_pid(void)
+{
+    return getpid();
+}
+
+bool ash_env_root(void)
+{
     return root;
 }
 
-static const char *ash_env_set_greeter(void);
+static void
+ash_getuid(void)
+{
+    uid = getuid();
+    root = (uid == ROOT_UID);
+    ash_var_set(ASH_ENV_ROOT, ash_bool_from(root));
+}
+
+static void ash_default_greeter(void);
+
+/* ash greeter */
+static struct ash_obj *greeter;
 
 const char *ash_env_get_greeter(void)
 {
-    const char *greeter;
-    if (!(greeter = ash_var_get_value(ash_var_get(ASH_GREETER))))
-        return ash_env_set_greeter();
-    return greeter;
-}
-
-void ash_env_prompt_default(void)
-{
-    ash_var_set(ASH_ENV_P1, DEFAULT_P1, ASH_STATIC);
-    ash_var_set(ASH_ENV_P2, DEFAULT_P2, ASH_STATIC);
-}
-
-static void ash_env_set_vars(void)
-{
-    ash_var_set_builtin(ASH_HOST, host);
-    ash_var_set_builtin(ASH_PATH, path);
-    ash_var_set_builtin(ASH_PWD, pwd);
-    ash_var_set_builtin(ASH_LOGNAME, uname);
-    ash_var_set_builtin(ASH_HOME, home);
+    return ash_str_get(greeter);
 }
 
 /* primary command prompt */
-static const char *ps1;
+static struct ash_obj *ps1 = NULL;
+
+/* secondary command prompt */
+static struct ash_obj *ps2 = NULL;
+
+void ash_env_prompt_default(void)
+{
+    ps1 = ash_str_from(DEFAULT_P1);
+    ps2 = ash_str_from(DEFAULT_P2);
+    ash_var_set(ASH_ENV_P1, ps1);
+    ash_var_set(ASH_ENV_P2, ps2);
+}
+
+static inline void
+ash_env_set_var(const char *id, const char *value)
+{
+    if (id && value)
+        ash_var_set(id, ash_str_from(value));
+}
+
+struct ash_env_set {
+    const char *id;
+    const char *value;
+};
+
+static void ash_env_set_vars(void)
+{
+    struct ash_env_set vars[] = {
+        { ASH_ENV_HOST,    host  },
+        { ASH_ENV_PATH,    path  },
+        { ASH_ENV_PWD,     pwd   },
+        { ASH_ENV_LOGNAME, uname },
+        { ASH_ENV_HOME,    home  },
+        { ASH_ENV_LANG,    lang  },
+        { ASH_ENV_MAIL,    mail  },
+        { ASH_ENV_SHELL,   shell },
+
+        { "_OS_FAMILY_", ASH_ENV_OS_FAMILY }
+    };
+
+    for (size_t i = 0; i < array_length(vars); ++i)
+        ash_env_set_var(vars[i].id, vars[i].value);
+}
+
+struct ash_prompt_fmt {
+    const char *p1;
+    const char *fmt;
+};
 
 void ash_prompt(void)
 {
-    ps1 = ash_var_get_value(ash_var_get(ASH_ENV_P1));
-
     char c;
-    const char *fmt = ps1;
+    const char *fmt;
+    ps1 = ash_var_obj(ash_var_get(ASH_ENV_P1));
+    if (!ps1 || !(fmt = ash_str_get(ps1)))
+        return;
 
-    while ((c = *(fmt++))){
-        if (c == '\\'){
+    while ((c = *(fmt++))) {
+        if (c == '\\') {
             c = *fmt;
-            switch (c){
+            switch (c) {
                 case '#':
                     ash_print("%lu", count);
                     break;
@@ -155,7 +239,7 @@ void ash_prompt(void)
                     break;
 
                 case '$':
-                    ash_putchar(root ? '#': c);
+                    ash_putchar(root ? DEFAULT_ROOT: DEFAULT_USER);
                     break;
 
                 default:
@@ -170,13 +254,13 @@ void ash_prompt(void)
     ++count;
 }
 
-/* secondary command prompt */
-static const char *ps2;
-
 void ash_prompt_next(void)
 {
-    if ((ps2 = ash_var_get_value(ash_var_get(ASH_ENV_P2))))
-        ash_print("%s", ps2);
+    const char *fmt;
+    ps2 = ash_var_obj(ash_var_get(ASH_ENV_P2));
+
+    if (!ps2 || (fmt = ash_str_get(ps2)))
+        ash_print("%s", fmt);
 }
 
 const char *ash_env_get_pwd(void)
@@ -191,7 +275,7 @@ size_t ash_env_get_pwd_max(void)
 
 const char *ash_env_get_dir(void)
 {
-    return dir && pwd ? dir: DEFAULT_DIR;
+    return dir ? dir: DEFAULT_DIR;
 }
 
 const char *ash_env_get_home(void)
@@ -217,24 +301,31 @@ const char *ash_env_get_path(void)
 void ash_env_pwd(void)
 {
     pwd = getcwd(pwd, pwd_size);
-    ash_var_set_builtin(ASH_PWD, pwd);
+    ash_env_set_var(ASH_ENV_PWD, pwd);
     ash_env_dir();
 }
 
 void ash_env_dir(void)
 {
-    if(home && !strcmp(pwd, home))
-        dir = ASH_HOME_DIR;
-    else if (pwd){
-        size_t len = strlen(pwd);
-        while (len > 0){
-            if (pwd[--len] == '/'){
-                dir = &pwd[++len];
+    if (home && pwd) {
+        if (!strcmp(home, pwd)) {
+            dir = ASH_HOME_DIR;
+            return;
+        }
+
+        size_t len, pos;
+        pos = len = strlen(pwd);
+
+        while (len > 0) {
+            if (pwd[--pos] == '/') {
+                size_t index = (pos + 1 < len) ? pos + 1: pos;
+                dir = &pwd[index];
                 return;
             }
         }
-    } else
-        dir = NULL;
+    }
+
+    dir = NULL;
 }
 
 static void ash_uname_host(void)
@@ -244,51 +335,72 @@ static void ash_uname_host(void)
         gethostname((char *)host, MAX_HOST_SIZE);
 }
 
-static void ash_home(void)
+static void ash_env_set_var_home(void)
 {
     home = getpwuid(getuid())->pw_dir;
 }
 
-void ash_env_init(void)
+static void ash_env_var_alloc(void)
 {
-    ash_env_set_greeter();
-
-    ash_env_prompt_default();
-
-    if ((shell = getenv(ASH_ENV_SHELL)))
-        ash_var_set(ASH_ENV_SHELL, shell, ASH_RODATA);
-
     pwd_size = pathconf(".", _PC_PATH_MAX);
-    if ((pwd = malloc(sizeof (char) * pwd_size)) != NULL)
-        ash_env_pwd();
-
-    host = malloc(sizeof (char) * MAX_HOST_SIZE);
-    ash_uname_host();
-    path = getenv(ASH_ENV_PATH);
-    home = getenv(ASH_ENV_HOME);
-    if (!home)
-        ash_home();
-
-    ash_env_set_vars();
-    ash_env_dir();
-    ash_exec_set_path();
+    pwd = ash_alloc((sizeof *pwd) * pwd_size);
+    host = ash_alloc((sizeof *host) * MAX_HOST_SIZE);
 }
 
-static const char *ash_env_set_greeter(void)
+static void ash_env_set_util(void)
 {
-    /* the default ash greeter */
-    static const char *ash_acorn =
-    "        $$$      \n"
-    "         $$      \n"
-    "       $$$$$$    \n"
-    "     $$$$$$$$$$  \n"
-    "    $$$oooooo$$$ \n"
-    "    $$oooooooo$$ \n"
-    "     $oooooooo$  \n"
-    "      oooooooo   \n"
-    "        oooo     \n"
-    "\n";
+    ash_var_set("_RAND_MAX_", ash_int_from(RAND_MAX));
+}
 
-    ash_var_set(ASH_GREETER, ash_acorn, ASH_STATIC);
-    return ash_acorn;
+static void ash_env_vars(void)
+{
+    greeter = ash_str_new();
+    ash_default_greeter();
+
+    ash_env_var_alloc();
+    ash_env_pwd();
+    ash_uname_host();
+
+    shell = getenv(ASH_ENV_SHELL);
+    path  = getenv(ASH_ENV_PATH);
+    lang  = getenv(ASH_ENV_LANG);
+    mail  = getenv(ASH_ENV_MAIL);
+    home  = getenv(ASH_ENV_HOME);
+    if (!home)
+        ash_env_set_var_home();
+
+    ash_env_set_vars();
+    ash_env_set_util();
+    ash_env_dir();
+}
+
+static void init(void)
+{
+    ash_getuid();
+    ash_env_prompt_default();
+    ash_env_vars();
+}
+
+const struct ash_unit_module ash_module_env = {
+    .init = init,
+    .destroy = NULL
+};
+
+/* the default ash greeter */
+static const char acorn[] =
+"        $$$      \n"
+"         $$      \n"
+"       $$$$$$    \n"
+"     $$$$$$$$$$  \n"
+"    $$$oooooo$$$ \n"
+"    $$oooooooo$$ \n"
+"     $oooooooo$  \n"
+"      oooooooo   \n"
+"        oooo     \n"
+"\n";
+
+static void ash_default_greeter(void)
+{
+    ash_str_set(greeter, acorn);
+    ash_var_set(ASH_ENV_GREETER, greeter);
 }

@@ -14,12 +14,13 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_MEM
-#define ASH_MEM
+#ifndef ASH_MEM_H
+#define ASH_MEM_H
 
 #include <stddef.h>
 
 extern void *ash_alloc(size_t);
+extern void *ash_zalloc(size_t);
 extern void *ash_realloc(void *, size_t);
 extern void ash_free(void *);
 

@@ -14,23 +14,49 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_ASH
-#define ASH_ASH
+#ifndef ASH_ASH_H
+#define ASH_ASH_H
 
+/* program name */
 #define PNAME "ash"
 
+/* shell name */
 #define ASH_NAME "acorn shell"
 
+/* current shell version */
 #define ASH_VERSION_MAJOR "0"
 #define ASH_VERSION_MINOR "1"
-#define ASH_VERSION_MICRO "6"
+#define ASH_VERSION_MICRO "8"
 
 #define ASH_VERSION ASH_VERSION_MAJOR "." \
                     ASH_VERSION_MINOR "." \
                     ASH_VERSION_MICRO
 
-#define ASH_BUILD_TYPE "(unstable)"
+#ifdef ASH_BUILD_STABLE
+/* the type of the build, either stable or unstable */
+    #define ASH_BUILD_TYPE "(stable)"
+#else
+    #define ASH_BUILD_TYPE "(unstable)"
+#endif
+
+/* the data-time of the build */
 #define ASH_BUILD_DATETIME __DATE__ " " __TIME__
+
+#define ASH_BUILD_INFO ASH_VERSION " " \
+                       ASH_BUILD_TYPE " " \
+                       ASH_BUILD_DATETIME
+
+/* denotes an `ok` termination status */
+#define ASH_STATUS_OK  0
+/* denotes an `err` termination status */
+#define ASH_STATUS_ERR 1
+
+typedef enum {
+
+    ASH_FLAG_SET   = 1,
+    ASH_FLAG_RESET = 0
+
+} ash_flag;
 
 /* set ash exit status */
 extern void ash_set_status(int);

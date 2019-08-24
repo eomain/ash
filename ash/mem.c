@@ -19,34 +19,40 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ASH_MEM_ERR "fatal"
-
-#include "ash.h"
-#include "io.h"
-#include "mem.h"
-
+#include "ash/ash.h"
+#include "ash/mem.h"
 
 static void ash_mem_err(void)
 {
-    ash_set_status(errno);
     ash_abort(strerror(errno));
 }
 
 void *ash_alloc(size_t n)
 {
-    assert( n > 0 );
+    assert(n > 0);
 
-    void *m = malloc(n);
-    if (!m)
+    void *m;
+    if (!(m = malloc(n)))
+        ash_mem_err();
+    return m;
+}
+
+void *ash_zalloc(size_t n)
+{
+    assert(n > 0);
+
+    void *m;
+    if (!(m = calloc(1, n)))
         ash_mem_err();
     return m;
 }
 
 void *ash_realloc(void *m, size_t n)
 {
-    assert( m != NULL && n > 0 );
-    m = realloc(m, n);
-    if (!m)
+    assert(m != NULL);
+    assert(n > 0);
+
+    if (!(m = realloc(m, n)))
         ash_mem_err();
     return m;
 }

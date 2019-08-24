@@ -14,31 +14,10 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_BUILTIN
-#define ASH_BUILTIN
+#ifndef ASH_BUILTIN_H
+#define ASH_BUILTIN_H
 
-/* list of all ash builtin commands */
-enum ash_builtin {
-    ASH_BUILTIN_ASSERT = 0,
-    ASH_BUILTIN_BUILTIN,
-    ASH_BUILTIN_CD,
-    ASH_BUILTIN_ECHO,
-    ASH_BUILTIN_EXIT,
-    ASH_BUILTIN_EXPORT,
-    ASH_BUILTIN_HELP,
-    ASH_BUILTIN_HISTORY,
-    ASH_BUILTIN_READ,
-    ASH_BUILTIN_SLEEP,
-    ASH_BUILTIN_SOURCE,
-    ASH_BUILTIN_UNSET,
-
-    /* number of ash builtin commands */
-    ASH_BUILTIN_NO
-};
-
-extern int ash_builtin_exec(int, int, const char * const *);
-extern int ash_builtin_find(const char *);
-extern void  ash_print_builtin(void);
-extern void  ash_print_err_builtin(const char *, const char *);
+extern const char *ash_builtin_usage(void);
+extern int ash_builtin(int, const char * const *);
 
 #endif

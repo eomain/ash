@@ -15,36 +15,32 @@
 */
 
 #include <stdlib.h>
-#include <string.h>
 
-#include "builtin.h"
-#include "env.h"
-#include "io.h"
-#include "ops.h"
-#include "sleep.h"
+#include "ash/ash.h"
+#include "ash/env.h"
+#include "ash/ops.h"
+#include "ash/sleep.h"
 
-#ifdef ASH_UNIX
+#ifdef ASH_PLATFORM_POSIX
     #include <unistd.h>
 #endif
 
 const char *ash_sleep_usage(void)
 {
-    return "put the program to sleep for [n] seconds";
+    return "put the program to sleep for `n` microseconds";
 }
 
 int ash_sleep(int argc, const char * const *argv)
 {
-    if(argc == 1){
-        ash_print_err_builtin(argv[0], perr(ARG_MSG_ERR));
-        return 1;
-    }
+    if (argc == 1)
+        return ASH_STATUS_OK;
 
-    if (!ash_stoi_ck(argv[1])){
-        ash_print_err_builtin(argv[0], perr(TYPE_ERR));
-        return 1;
-    }
+    if (!ash_stoi_check(argv[1]))
+        return ASH_STATUS_ERR;
 
-    sleep(atoi(argv[1]));
+    useconds_t msecs;
+    msecs = atoi(argv[1]);
+    usleep(msecs);
 
-    return 0;
+    return ASH_STATUS_OK;
 }

@@ -14,52 +14,85 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_VAR
-#define ASH_VAR
+#ifndef ASH_VAR_H
+#define ASH_VAR_H
 
 #include <stddef.h>
 
+#include "ash/ash.h"
+#include "ash/obj.h"
+#include "ash/type.h"
+#include "ash/unit.h"
+
+extern const struct ash_unit_module ash_module_var;
+
 struct ash_var;
 
-enum  {
-    ASH_VERSION_ = 0x00,
-    ASH_HOST     = 0x01,
-    ASH_PATH     = 0x02,
-    ASH_HOME     = 0x03,
-    ASH_PWD      = 0x04,
-    ASH_LOGNAME  = 0x05
+extern struct ash_obj *ash_var_obj(struct ash_var *);
+extern bool ash_var_mutable(struct ash_var *);
+extern void ash_var_bind(struct ash_var *, struct ash_obj *);
+extern void ash_var_bind_override(struct ash_var *, struct ash_obj *);
+extern void ash_var_unbind(struct ash_var *);
+
+/* ASH GLOBAL VARIABLE FUNCTIONS */
+extern struct ash_var *ash_var_set(const char *, struct ash_obj *);
+extern struct ash_var *ash_var_get(const char *);
+extern void ash_var_unset(struct ash_var *);
+
+extern struct ash_var *ash_var_set_override(const char *, struct ash_obj *);
+
+extern struct ash_var *ash_var_func_set(const char *, struct ash_obj *);
+extern struct ash_var *ash_var_func_get(const char *);
+
+struct ash_module;
+
+extern struct ash_module *ash_module_root(void);
+
+extern struct ash_module *ash_sub_module_set(struct ash_module *, const char *);
+extern struct ash_module *ash_sub_module_get(struct ash_module *, const char *);
+
+extern struct ash_var *ash_module_set(struct ash_module *, const char *, struct ash_obj *);
+extern struct ash_var *ash_module_get(struct ash_module *, const char *);
+extern void ash_module_unset(struct ash_module *, struct ash_var *);
+
+extern struct ash_var *ash_module_func_set(struct ash_module *, const char *, struct ash_obj *);
+extern struct ash_var *ash_module_func_get(struct ash_module *, const char *);
+
+void ash_module_func_unset(struct ash_module *, struct ash_var *);
+
+enum ash_module_path_type {
+    ASH_PATH_ABS,
+    ASH_PATH_CUR,
+    ASH_PATH_REL,
 };
 
-#define ASH_DATA   0
-#define ASH_RODATA 1
-#define ASH_STATIC 2
+struct ash_module_path {
+    enum ash_module_path_type type;
+    size_t length;
+    const char **path;
+};
 
-#define ASH_NIL '\0'
+struct ash_module *ash_module_path(struct ash_module *, struct ash_module_path *);
 
-extern int ash_var_check_composite(struct ash_var *);
-extern int ash_var_check_nil(struct ash_var *);
 
-extern void ash_vars_init(void);
-extern struct ash_var *ash_var_find_builtin(int);
-extern struct ash_var *ash_var_find(const char *);
-extern void ash_var_set_builtin(int, const char *);
-extern const char *ash_var_get_value(struct ash_var *);
-extern char *ash_var_clone_value(struct ash_var *);
-extern struct ash_var *ash_var_set(const unsigned char *, const char *, int);
-extern struct ash_var *ash_var_set_array(const unsigned char *, int, const char **, int);
-extern int ash_var_unset(const unsigned char *);
-extern struct ash_var *ash_var_get(const char *);
-extern const char *ash_var_array_value(struct ash_var *, size_t);
-extern int ash_var_insert_array(struct ash_var *, int, const char *);
+struct ash_env;
+struct ash_cache;
 
-extern void ash_var_env_new(int, const char **);
-extern void ash_var_env_destroy(void);
-extern struct ash_var *ash_var_env_set(const unsigned char *, const char *, int);
-extern struct ash_var *ash_var_env_get(const unsigned char *);
-extern int ash_var_env_unset(const unsigned char *);
+extern struct ash_env *ash_env_new(struct ash_module *);
+extern void ash_env_set(struct ash_env *);
+extern struct ash_env *ash_env_parent(struct ash_env *);
+extern struct ash_module *ash_env_module(struct ash_env *);
+extern struct ash_env *ash_env_get(void);
 
-extern void *ash_func_set(const unsigned char *, void *);
-extern void *ash_func_get(const char *);
-extern int ash_func_unset(const unsigned char *);
+/* ASH LOCAL VARIABLE FUNCTIONS */
+extern struct ash_env *ash_env_new_from(struct ash_module *, struct ash_env *);
+extern void ash_env_destroy(struct ash_env *);
+extern struct ash_var *ash_var_env_set(struct ash_env *, const char *, struct ash_obj *);
+extern struct ash_var *ash_var_env_get(struct ash_env *, const char *);
+extern void ash_var_env_unset(struct ash_env *, struct ash_var *);
+
+extern struct ash_var *ash_var_env_func_set(struct ash_env *, const char *, struct ash_obj *);
+extern struct ash_var *ash_var_env_func_get(struct ash_env *, const char *);
+extern void ash_var_env_func_unset(struct ash_env *, struct ash_var *);
 
 #endif

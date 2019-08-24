@@ -14,8 +14,8 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_SLEEP
-#define ASH_SLEEP
+#ifndef ASH_SLEEP_H
+#define ASH_SLEEP_H
 
 extern const char *ash_sleep_usage(void);
 extern int ash_sleep(int, const char * const *);

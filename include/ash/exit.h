@@ -14,8 +14,8 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_EXIT
-#define ASH_EXIT
+#ifndef ASH_EXIT_H
+#define ASH_EXIT_H
 
 extern const char *ash_exit_usage(void);
 extern int ash_exit(int, const char * const *);

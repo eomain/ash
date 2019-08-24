@@ -18,92 +18,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ash.h"
-#include "builtin.h"
-#include "env.h"
-#include "exec.h"
-#include "io.h"
-#include "lang.h"
-#include "script.h"
-#include "var.h"
-
-#define ASH_MAX_FAIL 3
-#define ASH_ARG_LEN  5
-
-/* set if login shell */
-static int ash_login = 0;
-
-/* start shell session after loading a script */
-static int ash_interact = 0;
-
-/* eval shell arguments as scipt */
-static int ash_eval = 0;
-
-/* begin shell without echo to standard out */
-static int ash_silent = 0;
-
-/* begin shell session with greeter */
-static int ash_greet = 0;
-
-/* number of script arguments */
-static char ash_nargs[ASH_ARG_LEN] = "0";
-
-static void ash_print_greeter(void);
-
-static void ash_set_args(int argc)
-{
-    sprintf(ash_nargs, "%d", argc);
-    ash_var_set("@", ash_nargs, ASH_STATIC);
-}
-
-int ash_get_interactive(void)
-{
-    return ash_interact;
-}
-
-int ash_get_silent(void)
-{
-    return ash_silent;
-}
-
-/* ash status used as exit status */
-static int e_stat = 0;
-
-/* set ash exit status */
-void ash_set_status(int status)
-{
-    e_stat = status;
-}
-
-/* ash main display prompt and read input */
-static int ash_main(int argc, const char **argv)
-{
-    /* set up environment */
-    /*if (argc > 0)
-        ash_var_env_new(argc, argv);*/
-
-    /* init io buffers and signal handlers */
-    ash_io_init();
-
-    char *buf;
-
-    /* amount of failed attempts */
-    int fcount = 0;
-
-    /* read and evaluate input */
-    for (;;){
-        ash_prompt();
-        if ((buf = ash_scan())){
-            ash_lang_eval(buf);
-        } else {
-            ash_print_err("failed to scan input!");
-            fcount++;
-            if (fcount == ASH_MAX_FAIL)
-                ash_abort(NULL);
-        }
-    }
-    return fcount ? 1: 0;
-}
+#include "ash/ash.h"
+#include "ash/env.h"
+#include "ash/int.h"
+#include "ash/io.h"
+#include "ash/macro.h"
+#include "ash/ops.h"
+#include "ash/script.h"
+#include "ash/session.h"
+#include "ash/str.h"
+#include "ash/tuple.h"
+#include "ash/type.h"
+#include "ash/var.h"
+#include "ash/lang/main.h"
 
 /* print the current ash version */
 static void ash_print_version(void)
@@ -114,42 +41,49 @@ static void ash_print_version(void)
 /* print the current ash build */
 static void ash_print_build(void)
 {
-    ash_print(PNAME " " ASH_VERSION " "
-    ASH_BUILD_TYPE " " ASH_BUILD_DATETIME "\n");
+    ash_print_msg(ASH_BUILD_INFO);
 }
 
 /* logout of ash session */
 void ash_logout(void)
 {
-    ash_logout_script();
-    exit(e_stat);
+    struct ash_session *session;
+    session = ash_session_default();
+    ash_session_quick_shutdown(session);
+}
+
+static void ash_exit_fail(void)
+{
+    exit(EXIT_FAILURE);
 }
 
 void ash_abort(const char *e_msg)
 {
-    if (!e_msg)
-        e_msg = "cannot continue!";
-    ash_set_status(EXIT_FAILURE);
-    ash_print("(abort) [%d] %s \n", e_stat, e_msg);
-    ash_logout();
+    struct ash_session *session;
+    session = ash_session_default();
+
+    e_msg = (!e_msg) ? "(abort)!": e_msg;
+    ash_print(PNAME ": %s\n", e_msg);
+    ash_session_abort(session);
 }
 
 static void ash_option_none(void)
 {
-    ash_print_err("no option specified");
+    ash_print_err("no option specified.");
+    ash_exit_fail();
 }
 
 static void ash_option_invalid(const char *s)
 {
-    ash_print(PNAME ": no such option `%s`\n", s);
+    ash_print(PNAME ": found unrecognized option `--%s`.\n", s);
+    ash_exit_fail();
 }
 
 static void ash_option_long(const char *s)
 {
     if (!(*s))
         ash_option_none();
-
-    if (!strcmp(s, "build"))
+    else if (!strcmp(s, "build"))
         ash_print_build();
     else if (!strcmp(s, "help"))
         ash_print_help();
@@ -157,162 +91,201 @@ static void ash_option_long(const char *s)
         ash_print_version();
     else
         ash_option_invalid(s);
+
+    ash_logout();
 }
 
 static void ash_option_short(char c)
 {
-    if (c == 'b')
-        ash_print_build();
-    else if (c == 'c')
-        ash_eval = 1;
-    else if (c == 'g')
-        ash_print_greeter();
-    else if (c == 'i')
-        ash_interact = 1;
-    else if (c == 'n')
-        ash_greet = 1;
-    else if (c == 's')
-        ash_silent = 1;
-    else if (c == 'h')
-        ash_print_help();
-    else if (c == 'v')
-        ash_print_version();
-    else
-        ash_print(PNAME": no such option `%c`\n", c);
+    struct ash_session *session;
+    struct ash_session_profile *profile;
+
+    session = ash_session_default();
+    profile = ash_session_profile(session);
+
+    switch (c) {
+        case 'b':
+            ash_print_build();
+            ash_logout();
+            break;
+
+        case 'e':
+            ash_session_set_entry(session);
+            break;
+
+        case 'i':
+            break;
+
+        case 'p':
+            ash_session_profile_set_profile(profile, false);
+            break;
+
+        case 's':
+            ash_io_silent(true);
+            break;
+
+        case 'h':
+            ash_print_help();
+            ash_logout();
+            break;
+
+        case 'v':
+            ash_print_version();
+            ash_logout();
+            break;
+
+        default:
+            ash_print(PNAME ": found unrecognized option `-%c`.\n", c);
+            ash_exit_fail();
+    }
 }
 
-struct {
-    int pos;
-    int len;
-    const char **ops;
-}
-static ash_ops = {
-    .pos = 0,
-    .len = 0,
-    .ops = NULL
+struct ash_option {
+    size_t pos;
+    size_t len;
+    const char **opts;
 };
 
-static void setops(int len, const char **ops)
+static void ash_option_init(struct ash_option *opt,
+                            size_t len, const char **opts)
 {
-    ash_ops.len = len;
-    ash_ops.ops = ops;
+    opt->pos = 0;
+    opt->len = len;
+    opt->opts = opts;
 }
 
-static inline int getnext(void)
+static const char *ash_option_get(struct ash_option *opt)
 {
-    return ash_ops.len - ash_ops.pos - 1;
-}
-
-static const char *getopt(void)
-{
-    int pos = ash_ops.pos;
-    if (ash_ops.ops && pos < ash_ops.len){
-        ash_ops.pos++;
-        return ash_ops.ops[pos];
+    size_t pos = opt->pos;
+    if (opt->opts && pos < opt->len) {
+        opt->pos++;
+        return opt->opts[pos];
     }
     return NULL;
 }
 
-/* parse arguments */
-static int ash_option(void)
+static inline size_t ash_option_count(struct ash_option *opt)
 {
-    const char *option;
-    while ((option = getopt())){
+    return (opt->len - opt->pos);
+}
 
-        if (!option[0])
+struct ash_var *ash_option_args(struct ash_option *opt, int argc)
+{
+    struct ash_obj *argv = NULL;
+    struct ash_obj *objs[argc];
+    memset(objs, 0, argc * sizeof (struct ash_obj *));
+
+    const char *args;
+    for (size_t i = 0; i < argc; ++i) {
+        args = ash_strcpy(ash_option_get(opt));
+        objs[i] = ash_str_from(args);
+    }
+
+    argv = ash_tuple_from(argc, objs);
+
+    return ash_var_set("@", argv);
+}
+
+void ash_option_script(struct ash_option *opt, const char *name)
+{
+    struct ash_obj *args = NULL;
+    size_t argc = ash_option_count(opt);
+
+    if (argc > 0) {
+        struct ash_var *av;
+        av = ash_option_args(opt, argc);
+        args = ash_var_obj(av);
+    }
+
+    struct script *script;
+    if (!(script = ash_script_open(name, true))) {
+        ash_print(PNAME ": error: unable to find file `%s`.\n", name);
+        ash_exit_fail();
+    }
+
+    struct ash_session *session;
+    session = ash_session_default();
+
+    if (ash_session_entry(session))
+        ash_script_exec_entry(script, ash_tuple_from(1, &args));
+    else
+        ash_script_exec(script);
+
+    ash_script_close(script);
+}
+
+static int ash_option_iter(struct ash_option *opt)
+{
+    const char *o;
+    while ((o = ash_option_get(opt))) {
+
+        if (!o[0])
             ash_option_none();
 
-        if (option[0] == '-') {
-            if (option[1] == '-')
-                ash_option_long(&option[2]);
-
-            else if (strlen(&option[1]) == 1)
-                ash_option_short(option[1]);
-
+        if (o[0] == '-') {
+            if (o[1] == '-')
+                ash_option_long(&o[2]);
+            else if (strlen(&o[1]) == 1)
+                ash_option_short(o[1]);
             else
-                ash_option_invalid(&option[1]);
-        }
-        else {
-            ash_set_args(getnext());
-            ash_script_load(option, ASH_ALERT);
-            return ash_get_interactive()? 0: -1;
+                ash_option_none();
+
+        } else {
+            ash_option_script(opt, o);
+            ash_logout();
         }
     }
     return 0;
 }
 
-int ash_get_login(void)
-{
-    return ash_login;
-}
-
-/* display the ash acorn prompt - default greeter */
 static void ash_print_greeter(void)
 {
-    ash_print("ash: acorn shell %s\n", ASH_VERSION);
-    /*ash_print("version: %s %s\n", ASH_VERSION, ASH_BUILD_TYPE);*/
-    ash_print("usage: type commands e.g. help\n\n");
-    ash_print(ash_env_get_greeter());
+    ash_print("ash: %s %s\n", ASH_NAME, ASH_VERSION);
+    ash_print("usage: help <command>\n");
 }
 
-/* display the ash help prompt */
 void ash_print_help(void)
 {
     ash_print_greeter();
-    /* todo: print commands */
 }
 
-static inline void ash_assert_login(const char *ash)
+static void ash_set_static_var(const char *id, const char *str)
 {
-    if (*ash == '-')
-        ash_login = 1;
-}
-
-static const char **getopts(void)
-{
-    int pos = ash_ops.pos;
-    return &ash_ops.ops[pos];
+    struct ash_obj *obj;
+    obj = ash_str_from(str);
+    ash_var_set(ash_strcpy(id), obj);
 }
 
 int main(int argc, const char *argv[])
 {
-    /* check if login shell */
-    ash_assert_login(argv[0]);
+    /* initialize the shell */
+    ash_unit_init();
 
-    /* check user */
-    ash_check_root();
+    struct ash_session *session;
+    struct ash_session_meta meta;
 
-    /* init the env variables */
-    ash_vars_init();
-    ash_env_init();
-
-    /* init the shell interpreter */
-    ash_lang_init();
-
-    /* read ash profile */
-    ash_profile();
-
-    ash_exec_set_exit(0);
+    session = ash_session_default();
+    ash_session_meta_init(&meta, argv[0]);
+    ash_session_init(session, &meta);
 
     /* set default variables */
-    ash_var_set("0", argv[0], ASH_STATIC);
-    ash_var_set("#", "0", ASH_STATIC);
-    ash_var_set("ASH", ASH_NAME, ASH_STATIC);
-    ash_var_set("ASH_VERSION", ASH_VERSION, ASH_STATIC);
-    ash_var_set("ASH_MAJOR", ASH_VERSION_MAJOR, ASH_STATIC);
-    ash_var_set("ASH_MINOR", ASH_VERSION_MINOR, ASH_STATIC);
-    ash_var_set("ASH_MICRO", ASH_VERSION_MICRO, ASH_STATIC);
+    ash_set_static_var("0", argv[0]);
+    ash_set_static_var("ASH", ASH_NAME);
+    ash_set_static_var("ASH_VERSION", ASH_VERSION);
+    ash_set_static_var("ASH_MAJOR", ASH_VERSION_MAJOR);
+    ash_set_static_var("ASH_MINOR", ASH_VERSION_MINOR);
+    ash_set_static_var("ASH_MICRO", ASH_VERSION_MICRO);
 
-    setops(--argc, ++argv);
+    size_t ac = (argc - 1);
+    const char **av = argv;
 
-    if ((ash_option()) == 0){
-        if (ash_greet)
-            ash_print_greeter();
+    struct ash_option opt;
+    ash_option_init(&opt, ac, ++av);
 
-        argc = getnext();
-        argv = getopts();
-        ash_main(argc, argv);
+    if ((ash_option_iter(&opt)) == 0) {
+        ash_session_start(session);
+        ash_main();
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }

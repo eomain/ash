@@ -14,10 +14,12 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_UNSET
-#define ASH_UNSET
+#ifndef ASH_UNSET_H
+#define ASH_UNSET_H
+
+#include "ash/command.h"
 
 extern const char *ash_unset_usage(void);
-extern int ash_unset(int, const char * const *);
+extern int ash_unset_env(int, const char *const *, struct ash_command_env *);
 
 #endif

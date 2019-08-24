@@ -14,8 +14,8 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_ECHO
-#define ASH_ECHO
+#ifndef ASH_ECHO_H
+#define ASH_ECHO_H
 
 extern const char *ash_echo_usage(void);
 extern int ash_echo(int, const char * const *);

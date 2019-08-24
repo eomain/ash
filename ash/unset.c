@@ -14,24 +14,24 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "unset.h"
-#include "var.h"
+#include "ash/ash.h"
+#include "ash/command.h"
+#include "ash/unset.h"
+#include "ash/var.h"
 
 const char *ash_unset_usage(void)
 {
     return "unset variable or function";
 }
 
-int ash_unset(int argc, const char * const *argv)
+int ash_unset_env(int argc, const char * const *argv,
+                  struct ash_command_env *env)
 {
     int status = 0;
+    struct ash_var *av;
 
-    for (int i = 1; i < argc; ++i){
-        if (ash_var_unset(argv[i])){
-            if (ash_func_unset(argv[i]))
-                status = 1;
-        }
-    }
+    for (int i = 1; i < argc; ++i)
+        runtime_unset_var(env->env, argv[i]);
 
     return status;
 }

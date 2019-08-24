@@ -14,21 +14,45 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_ENV
-#define ASH_ENV
+#ifndef ASH_ENV_H
+#define ASH_ENV_H
 
 #include <stddef.h>
 
-#define ASH_GREETER "ASH_GREETER"
+#include "ash/ash.h"
+#include "ash/type.h"
+#include "ash/unit.h"
 
-#ifdef __unix__
-    #define ASH_UNIX
+extern const struct ash_unit_module ash_module_env;
+
+/* IF BUILDING FOR A POSIX-COMPLIANT PLATFORM */
+#if defined (__unix__) || defined (HAVE_UNISTD_H)
+    #define ASH_PLATFORM_POSIX
 #endif
+
+
+#ifdef ASH_PLATFORM_POSIX
+    #include <sys/types.h>
+
+    #define ASH_ENV_OS_FAMILY "unix"
+
+    #define ASH_PATH_DELIM "/"
+
+    typedef uid_t auid;
+    typedef pid_t apid;
+#endif
+
+#define ASH_ENV_GREETER "ASH_GREETER"
+
+
+extern auid   ash_env_uid(void);
+extern apid   ash_env_pid(void);
+extern bool   ash_env_root(void);
 
 extern const char *ash_env_get_greeter(void);
 extern void ash_env_prompt_default(void);
 
-extern int ash_check_root(void);
+extern void ash_env_profile(void);
 extern void ash_prompt(void);
 extern void ash_prompt_next(void);
 extern void ash_env_init(void);

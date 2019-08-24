@@ -14,10 +14,12 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_SOURCE
-#define ASH_SOURCE
+#ifndef ASH_SOURCE_H
+#define ASH_SOURCE_H
+
+#include "ash/command.h"
 
 extern const char *ash_source_usage(void);
-extern int ash_source(int, const char * const *);
+extern int ash_source_env(int, const char * const *, struct ash_command_env *);
 
 #endif

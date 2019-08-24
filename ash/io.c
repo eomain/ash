@@ -16,85 +16,90 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <signal.h>
+#include <histedit.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "ash.h"
-#include "io.h"
-#include "mem.h"
+#include "ash/ash.h"
+#include "ash/env.h"
+#include "ash/io.h"
+#include "ash/mem.h"
+#include "ash/session.h"
+#include "ash/type.h"
+#include "ash/unit.h"
+#include "ash/term/term.h"
 
-#define MIN_BUFFER_SIZE 2096
-#define MAX_BUFFER_SIZE 16384
+#ifdef ASH_PLATFORM_POSIX
+    #include <sys/stat.h>
+#endif
 
-static int ash_errno = ASH_ERRNO;
-
-void ash_set_errno(int err)
+static inline long fsize(FILE *fp)
 {
-    ash_errno = err;
-}
+    if (fseek(fp, 0, SEEK_END) == -1)
+        return 0;
 
-static inline size_t fsize(FILE *fp)
-{
-    fseek(fp, 0, SEEK_END);
-    size_t len = ftell(fp);
+    long len = ftell(fp);
+    if (len == -1)
+        return 0;
+
     rewind(fp);
     return len;
 }
 
-const char *ash_open(const char *name, int err)
+static int fcheck(const char *name)
 {
+    struct stat f_stat;
+    stat(name, &f_stat);
+    return S_ISREG(f_stat.st_mode) == 0 ? -1: 0;
+}
+
+const char *ash_io_read(const char *name)
+{
+    if (fcheck(name))
+        return NULL;
+
     FILE *fp;
-    fp = fopen(name, "r");
+    char *content = NULL;
 
-    if (fp != NULL){
-        size_t len = fsize(fp);
-        char *buf = ash_alloc(len + 1 * sizeof (char));
-        int n = (fread(buf, sizeof (char), len, fp) == len) ? 1: 0;
-        fclose(fp);
-        if (n == 1)
-            return buf;
-    } else if (err == ASH_ALERT)
-        ash_print_errno(name);
+    if (!(fp = fopen(name, "r")))
+        return NULL;
 
-    return NULL;
-}
+    long len = fsize(fp);
+    if (!(len == 0 || ferror(fp))) {
+        char *buf = ash_zalloc(len + 1 * sizeof (*buf));
 
-static char scan_buf[MIN_BUFFER_SIZE];
+        if ((fread(buf, sizeof (char), len, fp) == len))
+            content = buf;
+        else
+            ash_free(buf);
+    }
 
-static void ash_io_handle(int sig)
-{
-    /* todo */
-    if (sig == SIGQUIT || sig == SIGTSTP || sig == SIGINT)
-        return;
-}
+    fclose(fp);
 
-static void ash_io_signal(void)
-{
-    struct sigaction act;
-    act.sa_handler = ash_io_handle;
-    sigemptyset(&act.sa_mask);
-    act.sa_flags = SA_RESTART;
-    sigaction(SIGINT,  &act, NULL);
-    sigaction(SIGQUIT, &act, NULL);
-    sigaction(SIGTSTP, &act, NULL);
+    return content;
 }
 
 int ash_scan_buffer(char *buf, size_t nbytes)
 {
+    const char *input;
     assert(buf);
     memset(buf, 0, nbytes);
-    if (fgets(buf, nbytes, stdin))
+
+    if ((input = ash_term_get_default())) {
+        size_t len;
+        len = strlen(input);
+        len = (nbytes < len) ? nbytes: len;
+        strncpy(buf, input, len);
         return 0;
+    }
     return -1;
 }
 
-char *ash_scan(void)
+const char *ash_scan(void)
 {
-    if (ash_scan_buffer(scan_buf, MIN_BUFFER_SIZE) == 0)
-        return scan_buf;
-    return NULL;
+    return ash_term_get(&term);
 }
 
 void ash_print(const char *fmt, ...)
@@ -105,10 +110,18 @@ void ash_print(const char *fmt, ...)
     va_end(ap);
 }
 
+static bool silent = false;
+
+void ash_io_silent(bool value)
+{
+    silent = value;
+}
+
 void ash_vprint(const char *fmt, va_list ap)
 {
-    if (!ash_get_silent())
+    if (!silent)
         vfprintf(stdout, fmt, ap);
+    ash_flush();
 }
 
 void ash_puts(const char *s)
@@ -119,6 +132,11 @@ void ash_puts(const char *s)
 void ash_putchar(char c)
 {
     ash_print("%c", c);
+}
+
+void ash_flush(void)
+{
+    fflush(stdout);
 }
 
 void ash_print_msg(const char *msg)
@@ -136,25 +154,17 @@ void ash_print_errno(const char *msg)
     ash_print(PNAME ": error: %s: %s\n", msg, strerror(errno));
 }
 
-void ash_io_init(void)
+static void init(void)
 {
-    ash_io_signal();
+    ash_unit_module_init(&ash_module_term);
 }
 
-const char *ash_merr[ ASH_ERR_NO ] = {
-    [ ARG_MSG_ERR ]     = "expected argument",
-    [ TYPE_ERR ]        = "incorrect value type",
-    [ RODATA_ERR ]      = "read-only data",
-    [ PARSE_ERR ]       = "parsed with errors",
-    [ UREG_CMD_ERR ]    = "unrecognized command",
-    [ SIG_MSG_ERR ]     = "abnormal termination"
+static void destroy(void)
+{
+    ash_unit_module_destory(&ash_module_term);
+}
+
+const struct ash_unit_module ash_module_io = {
+    .init = init,
+    .destroy = destroy
 };
-
-const char *perr(int msg)
-{
-    if (msg == ASH_ERRNO)
-        msg = ash_errno;
-    if (msg < ASH_ERR_NO)
-        return ash_merr[msg];
-    return "internal error";
-}

@@ -14,48 +14,31 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_IO
-#define ASH_IO
+#ifndef ASH_IO_H
+#define ASH_IO_H
 
 #include <stdarg.h>
+#include <stddef.h>
 
-#define ASH_IO_READ       0
-#define ASH_IO_WRITE      1
-#define ASH_IO_READ_WRITE 2
+#include "ash/ash.h"
+#include "ash/type.h"
+#include "ash/unit.h"
 
-#define ASH_ALERT  0
-#define ASH_IGNORE 1
+extern const struct ash_unit_module ash_module_io;
 
-/* ash error code used to set and print error message */
-enum ash_errno {
-    /* use error code of set errno */
-    ASH_ERRNO = -1,
+extern const char *ash_io_read(const char *);
+extern void ash_io_silent(bool);
 
-    /* error types */
-    ARG_MSG_ERR = 0,
-    TYPE_ERR,
-    RODATA_ERR,
-    PARSE_ERR,
-    UREG_CMD_ERR,
-    SIG_MSG_ERR,
-
-    /* number of ash errors */
-    ASH_ERR_NO
-};
-
-extern const char *ash_open(const char *, int);
-
-extern char *ash_scan(void);
+extern const char *ash_scan(void);
 extern int   ash_scan_buffer(char *, size_t);
 extern void  ash_print(const char *, ...);
 extern void  ash_vprint(const char *, va_list);
 extern void  ash_puts(const char *);
 extern void  ash_putchar(char);
+extern void  ash_flush(void);
 extern void  ash_print_msg(const char *);
 extern void  ash_print_err(const char *);
 extern void  ash_print_errno(const char *);
 extern void  ash_io_init(void);
-extern void  ash_set_errno(int);
-extern const char *perr(int);
 
 #endif

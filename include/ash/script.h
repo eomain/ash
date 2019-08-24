@@ -14,17 +14,62 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_SCRIPT
-#define ASH_SCRIPT
+#ifndef ASH_SCRIPT_H
+#define ASH_SCRIPT_H
 
-#define ASH_PROFILE "~.ash_profile"
-#define ASH_LOGOUT  "~.ash_logout"
-#define ASH_HISTORY "~.ash_history"
+#include "ash/ash.h"
+#include "ash/bool.h"
+#include "ash/obj.h"
+
+#define ASH_SCRIPT_PROFILE "~.ash_profile"
+#define ASH_SCRIPT_LOGOUT  "~.ash_logout"
+#define ASH_SCRIPT_HISTORY "~.ash_history"
 
 #define DEFAULT_HISTORY_SIZE 500
 
-extern int ash_profile(void);
+struct script_meta {
+    struct ash_obj *main;
+    struct ash_obj *file;
+};
+
+extern void ash_script_meta_get(struct script_meta *);
+extern void ash_script_meta_set(struct script_meta *);
+
+struct file {
+    const char *path;
+    const char *name;
+    const char *text;
+    size_t length;
+};
+
+struct script {
+    struct file file;
+    bool        main;
+    ash_flag    open;
+    ash_flag    exec;
+
+    int ndeps;
+    struct script **deps;
+};
+
+extern struct script *ash_script_open(const char *, bool);
+extern int ash_script_load(const char *, bool);
+extern void ash_script_close(struct script *);
+extern int ash_script_exec(struct script *);
+extern int ash_script_exec_entry(struct script *, struct ash_obj *);
+extern const char *ash_script_name(struct script *);
+extern const char *ash_script_content(struct script *);
+
+/*
+  load and execute the ash_profile script
+  from the HOME directory if it exists
+*/
+extern int ash_profile_script(void);
+
+/*
+  load and execute the ash_logout script
+  from the HOME directory if it exists
+*/
 extern int ash_logout_script(void);
-extern int ash_script_load(const char *, int);
 
 #endif

@@ -14,63 +14,68 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdlib.h>
 #include <string.h>
 
-#include "builtin.h"
-#include "env.h"
-#include "io.h"
-#include "mem.h"
-#include "read.h"
-#include "var.h"
+#include "ash/command.h"
+#include "ash/env.h"
+#include "ash/io.h"
+#include "ash/mem.h"
+#include "ash/ops.h"
+#include "ash/read.h"
+#include "ash/str.h"
+#include "ash/var.h"
+#include "ash/lang/runtime.h"
 
-#define MAX_INPUT_SIZE 255
+#define MAX_INPUT_SIZE 2048
 
 const char *ash_read_usage(void)
 {
     return "read input from standard input";
 }
 
-static int ash_read_input(const char *var)
+static int ash_read_input(const char *var, struct ash_runtime_env *renv)
 {
-    if (var){
-        char *buf = ash_alloc(MAX_INPUT_SIZE);
-        if (buf){
-            if (ash_scan_buffer(buf, MAX_INPUT_SIZE) == 0){
-                size_t len = strlen(buf) + 1;
-                if (len < MAX_INPUT_SIZE){
-                    char *n;
-                    if ((n = strchr(buf, '\n'))){
-                        *n = '\0';
-                        len--;
-                    }
-                    buf = ash_realloc(buf, len);
-                }
-                ash_var_set(var, buf, ASH_DATA);
-            } else
-                return -1;
-        } else
-            return -1;
-    } else
+    if (!var) {
         ash_scan();
+        return -1;
+    }
 
-    return 0;
+    static char input[MAX_INPUT_SIZE];
+    memset(input, 0, MAX_INPUT_SIZE);
+
+    if (ash_scan_buffer(input, MAX_INPUT_SIZE) == 0) {
+        size_t len = strlen(input) + 1;
+        if (len < MAX_INPUT_SIZE) {
+            char *n;
+            if ((n = strchr(input, '\n'))) {
+                *n = '\0';
+                len--;
+            }
+        }
+
+        struct ash_obj *obj;
+        obj = ash_str_from(ash_strcpy(input));
+        runtime_set_var(renv, var, obj);
+        return 0;
+
+    }
+
+    return -1;
 }
 
-int ash_read(int argc, const char * const *argv)
+int ash_read_env(int argc, const char * const *argv, struct ash_command_env *env)
 {
-    int status = 0;
-    int i = 1;
+    const char *opt;
     const char *prompt = NULL;
     const char *var = NULL;
 
-    for (; i < argc; ++i){
-        const char *opt = argv[i];
+    for (int i = 1; i < argc; ++i) {
+        opt = argv[i];
 
-        if (opt[0] == '-' && strlen(opt) == 2){
+        if (opt[0] == '-' && strlen(opt) == 2) {
             char c = opt[1];
 
-            if (c == 'p'){
+            if (c == 'p') {
                 if (i < argc)
                     prompt = argv[++i];
             }
@@ -84,7 +89,5 @@ int ash_read(int argc, const char * const *argv)
     if (prompt)
         ash_print(prompt);
 
-    status = ash_read_input(var);
-
-    return status ? 1: 0;
+    return ash_read_input(var, env->env);
 }

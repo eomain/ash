@@ -14,28 +14,30 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdlib.h>
-#include <string.h>
-
-#include "builtin.h"
-#include "env.h"
-#include "io.h"
-#include "script.h"
-#include "source.h"
+#include "ash/ash.h"
+#include "ash/command.h"
+#include "ash/script.h"
+#include "ash/source.h"
 
 const char *ash_source_usage(void)
 {
     return "read and execute commands from file";
 }
 
-int ash_source(int argc, const char * const *argv)
+int ash_source_env(int argc, const char * const *argv,
+                   struct ash_command_env *env)
 {
-    int status = 0;
+    int status = ASH_STATUS_OK;
 
-    for (int i = 1; i < argc; ++i){
-        if (!ash_script_load(argv[i], ASH_IGNORE))
-            status = 1;
+    struct script_meta meta;
+    ash_script_meta_get(&meta);
+
+    for (int i = 1; i < argc; ++i) {
+        if (ash_script_load(argv[i], false) == -1)
+            status = ASH_STATUS_ERR;
     }
+
+    ash_script_meta_set(&meta);
 
     return status;
 }

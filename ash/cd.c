@@ -18,13 +18,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "builtin.h"
-#include "cd.h"
-#include "env.h"
-#include "io.h"
-#include "ops.h"
+#include "ash/ash.h"
+#include "ash/cd.h"
+#include "ash/env.h"
+#include "ash/io.h"
 
-#ifdef ASH_UNIX
+#ifdef ASH_PLATFORM_POSIX
     #include <unistd.h>
 #endif
 
@@ -33,19 +32,29 @@ const char *ash_cd_usage(void)
     return "change directory";
 }
 
+static int ash_chdir(const char *pname, const char *dir)
+{
+    int status;
+    if ((status = chdir(dir)))
+        ash_print("%s: error: '%s': %s.\n", pname, dir, strerror(errno));
+    else
+        ash_env_pwd();
+
+    return status;
+}
+
 int ash_cd(int argc, const char * const *argv)
 {
-    int status = 0;
+    int status;
+    const char *pname;
+    pname = argv[0];
 
-    if (argc > 1){
-        const char *dir = argv[1];
-        status = chdir(dir);
-        if (status){
-            ash_print("%s: error: '%s': %s\n", argv[0], dir, strerror(errno));
-            status = 1;
-        }
-        else
-            ash_env_pwd();
-    }
+    if (argc == 1)
+        status = ash_chdir(pname, ash_env_get_home());
+    else if (argc > 1)
+        status = ash_chdir(pname, argv[1]);
+
+    status = (status) ? ASH_STATUS_ERR: ASH_STATUS_OK;
+
     return status;
 }

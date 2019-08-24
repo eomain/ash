@@ -1,4 +1,4 @@
-/* Copyright 2018 eomain
+/* Copyright 2019 eomain
    this program is licensed under the 2-clause BSD license
    see COPYING for the full license info
 
@@ -14,15 +14,32 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_LANG
-#define ASH_LANG
+#include <stdlib.h>
+#include <time.h>
 
-/* set up the lang interrupt and stack */
-extern void ash_lang_init(void);
-/* evaluate input string and return exit status
-   -1 : empty string
-    0 : exit success
-    1 : exit failure */
-extern int ash_lang_eval(const char *);
+#include "ash/ash.h"
+#include "ash/command.h"
+#include "ash/obj.h"
+#include "ash/rand.h"
 
-#endif
+const char *ash_rand_usage(void)
+{
+    return "generate a random number";
+}
+
+int ash_rand_env(int argc, const char * const *argv,
+                 struct ash_command_env *env)
+{
+    struct ash_obj *result;
+    static int last;
+    int r, n;
+
+    srand(time(NULL) + (last  * ((last << 2) & n)));
+    r = rand();
+    last = r;
+
+    result = ash_int_from(r);
+    ash_command_env_set_result(env, result);
+
+    return ASH_STATUS_OK;
+}
