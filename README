@@ -33,7 +33,7 @@ Basic usage:
         cd <directory>
 
     # set a variable
-        var := "acorn"
+        let var := "acorn"
 
     # to print variable:
         echo $var
@@ -44,7 +44,7 @@ Basic usage:
     # if statement
         if [ true ]
             read -p "enter name: " name
-            echo "welcome" $name
+            echo "welcome { $name }"
         end
 
     # for loop
