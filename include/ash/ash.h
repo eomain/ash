@@ -58,18 +58,10 @@ typedef enum {
 
 } ash_flag;
 
-/* set ash exit status */
-extern void ash_set_status(int);
-/* get interactive mode status */
-extern int  ash_get_interactive(void);
-/* get silent mode status */
-extern int ash_get_silent(void);
 /* display the ash help prompt */
 extern void ash_print_help(void);
 /* logout of ash session */
 extern void ash_logout(void);
-/* get login shell status */
-extern int  ash_get_login(void);
 /* abort shell session */
 extern void ash_abort(const char *);
 
