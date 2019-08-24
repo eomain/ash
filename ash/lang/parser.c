@@ -1385,7 +1385,7 @@ static struct ast_expr *parser_path_expr(struct parser *p)
 
 static struct ast_use *parser_use(struct parser *p)
 {
-    struct ast_use *use;
+    struct ast_use *use = NULL;
     struct ast_path *path;
 
     parser_assert(p, USE_TK);
