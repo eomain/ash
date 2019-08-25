@@ -239,10 +239,6 @@ extern void ash_tk_set_add(struct ash_tk_set *, enum ash_tk_type,
 
 extern struct ash_tk *ash_tk_set_front(struct ash_tk_set *);
 
-extern struct ash_tk_set ash_input_scan(struct input *);
-
-extern void ash_input_text(struct input *, const char *);
-
-extern void ash_input_script(struct input *, struct script *);
+extern int ash_lang_prompt(struct ash_tk_set *);
 
 #endif

@@ -20,9 +20,12 @@
 
 #include "ash/ash.h"
 #include "ash/env.h"
+#include "ash/io.h"
 #include "ash/macro.h"
 #include "ash/mem.h"
 #include "ash/ops.h"
+#include "ash/lang/lang.h"
+#include "ash/lang/lex.h"
 
 static struct ash_tk *
 ash_tk_new(int res, const char *str)
@@ -111,7 +114,7 @@ ash_tk_strcpy(struct ash_tk **tk)
 isize
 ash_tk_num(struct ash_tk **tk)
 {
-    if (tk && *tk && (*tk) ->str)
+    if (tk && *tk && (*tk)->str)
         return atol((*tk)->str);
     return 0;
 }
@@ -165,6 +168,40 @@ ash_tk_set_free(struct ash_tk_set *set)
         set->front = NULL;
     }
     set->rear = NULL;
+}
+
+static inline bool ash_lang_is_block(enum ash_tk_type type)
+{
+    return (type == IF_TK || type == DO_TK ||
+            type == FOR_TK || type == DEF_TK);
+}
+
+int ash_lang_prompt(struct ash_tk_set *set)
+{
+    int level = 1;
+    struct ash_tk *next;
+    struct ash_tk_set s;
+
+    do {
+        ash_tk_set_init(&s);
+        ash_prompt_next();
+        if (lex_scan_input(&s, ash_scan()))
+            return -1;
+
+        if ((next = ash_tk_set_front(&s))) {
+            set->rear->next = next;
+            set->rear = s.rear;
+        }
+
+        for (; next != NULL; next = next->next) {
+            if (ash_lang_is_block(next->res))
+                ++level;
+            else if (next->res == END_TK)
+                --level;
+        }
+    } while (level != 0);
+
+    return 0;
 }
 
 static const char *ash_token_names[] = {

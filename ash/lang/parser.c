@@ -20,6 +20,7 @@
 #include "ash/lang/parser.h"
 
 struct parser {
+    struct ash_tk_set *set;
     struct ash_tk *token;
     const char *source;
     size_t line;
@@ -39,6 +40,7 @@ static void parser_init(struct parser *p, struct parser_meta *meta)
     source = input_get_name(meta->input);
     token = ash_tk_set_front(meta->set);
 
+    p->set = meta->set;
     p->token = token;
     p->source = source;
     p->line = (token) ? token->line: 1;
@@ -63,11 +65,29 @@ static struct ast_expr *parser_expr(struct parser *);
 static struct ast_bool_expr *parser_bool_expr(struct parser *);
 static struct ast_composite *parser_args(struct parser *);
 static void parser_error_expec(struct parser *, enum ash_tk_type);
+static inline enum ash_tk_type parser_check_next(struct parser *);
 
 static inline const char *
 parser_get_source(struct parser *p)
 {
     return (p->source) ? p->source: "<stdin>";
+}
+
+static void
+parser_prompt(struct parser *p)
+{
+    if (ash_lang_prompt(p->set))
+        p->error = true;
+}
+
+static inline void
+parser_assert_prompt(struct parser *p)
+{
+    if (!p->interactive)
+        return;
+
+    if (!parser_check_next(p))
+        parser_prompt(p);
 }
 
 static inline struct ast_path *
@@ -526,6 +546,7 @@ static struct ast_if *parser_if(struct parser *p)
         parser_block_inc(p);
 
     expr = parser_expr_block(p);
+    parser_assert_prompt(p);
 
     block = parser_get_block(p);
     if (parser_get_next_type(p) != END_TK)
@@ -599,6 +620,7 @@ static struct ast_while *parser_while(struct parser *p)
     parser_assert(p, DO_TK);
     parser_lblock_inc(p);
     expr = parser_expr_block(p);
+    parser_assert_prompt(p);
 
     if (parser_get_next_type(p) != END_TK)
         stm = parser_body_block(p);
@@ -641,6 +663,7 @@ static struct ast_for *parser_for(struct parser *p)
         parser_error_expec_msg(p, "<iterable>");
         return NULL;
     }
+    parser_assert_prompt(p);
 
     if (parser_check_next(p) != END_TK) {
         parser_get_next(p);
@@ -1263,6 +1286,7 @@ static struct ast_function *parser_function(struct parser *p)
     } else
         parser_assert_next(p, RP_TK);
 
+    parser_assert_prompt(p);
     parser_get_next(p);
     stm = parser_function_block(p);
     parser_assert(p, END_TK);
