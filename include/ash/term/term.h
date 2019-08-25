@@ -27,5 +27,6 @@ extern struct ash_term term;
 
 extern const char *ash_term_get(struct ash_term *);
 extern const char *ash_term_get_default(void);
+extern void ash_term_clear(struct ash_term *);
 
 #endif
