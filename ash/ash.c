@@ -205,6 +205,7 @@ void ash_option_script(struct ash_option *opt, const char *name)
 
     struct ash_session *session;
     session = ash_session_default();
+    ash_session_set_script(session);
 
     if (ash_session_entry(session))
         ash_script_exec_entry(script, ash_tuple_from(1, &args));

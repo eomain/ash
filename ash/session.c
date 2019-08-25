@@ -66,6 +66,7 @@ struct ash_session {
     bool login;
     bool root;
     bool entry;
+    bool script;
     int status;
     auid uid;
     apid pid;
@@ -81,6 +82,7 @@ void ash_session_init(struct ash_session *session,
     session->root = ash_env_root();
     session->entry = false;
     session->status = 0;
+    session->script = false;
     session->uid = ash_env_uid();
     session->pid = ash_env_pid();
     ash_session_profile_init(&session->profile);
@@ -96,8 +98,8 @@ void ash_session_start(struct ash_session *session)
 
 void ash_session_shutdown(struct ash_session *session)
 {
-    ash_session_profile_shutdown(&session->profile);
-
+    if (!session->script)
+        ash_session_profile_shutdown(&session->profile);
     exit(session->status);
 }
 
@@ -114,6 +116,11 @@ bool ash_session_entry(struct ash_session *session)
 void ash_session_set_entry(struct ash_session *session)
 {
     session->entry = true;
+}
+
+void ash_session_set_script(struct ash_session *session)
+{
+    session->script = true;
 }
 
 void ash_session_abort(struct ash_session *session)

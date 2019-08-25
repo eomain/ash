@@ -41,6 +41,7 @@ extern void ash_session_quick_shutdown(struct ash_session *);
 extern void ash_session_abort(struct ash_session *);
 extern bool ash_session_entry(struct ash_session *);
 extern void ash_session_set_entry(struct ash_session *);
+extern void ash_session_set_script(struct ash_session *);
 extern void ash_session_set_status(struct ash_session *, int);
 extern struct ash_session *ash_session_default(void);
 extern struct ash_session_profile *ash_session_profile(struct ash_session *);

@@ -42,8 +42,7 @@ int ash_exit(int argc, const char * const *argv)
         status = exit_status(argv[1]);
     session = ash_session_default();
 
-    ash_session_set_status(session, status);
-    ash_session_quick_shutdown(session);
+    ash_session_shutdown_status(session, status);
 
     return status;
 }
