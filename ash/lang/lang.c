@@ -28,14 +28,13 @@
 #include "ash/lang/lex.h"
 
 static struct ash_tk *
-ash_tk_new(int res, const char *str)
+ash_tk_new(enum ash_tk_type type, const char *str)
 {
     struct ash_tk *tk;
-    tk = ash_alloc(sizeof ( *tk ));
-
+    tk = ash_alloc(sizeof *tk);
     tk->str = str;
-    tk->res = res;
-    tk->eos = 0;
+    tk->type = type;
+    tk->eos = false;
     tk->next = NULL;
     return tk;
 }
@@ -50,11 +49,11 @@ ash_tk_next(struct ash_tk **tk)
     return *tk;
 }
 
-int
+enum ash_tk_type
 ash_tk_get(struct ash_tk **tk)
 {
     if (tk && *tk)
-        return (*tk)->res;
+        return (*tk)->type;
     else
         return NO_TK;
 }
@@ -65,28 +64,28 @@ ash_tk_valid(struct ash_tk **tk)
     return ash_tk_get(tk) != NO_TK;
 }
 
-int
+enum ash_tk_type
 ash_tk_getnext(struct ash_tk **tk)
 {
     ash_tk_next(tk);
     return ash_tk_get(tk);
 }
 
-int
+enum ash_tk_type
 ash_tk_cknext(struct ash_tk **tk)
 {
     if (tk && *tk)
-        return ash_tk_get( &(*tk)->next );
+        return ash_tk_get(&(*tk)->next);
     else
         return NO_TK;
 }
 
-int
+bool
 ash_tk_eos(struct ash_tk **tk)
 {
     if (tk && *tk)
         return (*tk)->eos;
-    return 0;
+    return false;
 }
 
 bool ash_tk_get_eos(struct ash_tk **tk)
@@ -154,19 +153,20 @@ ash_tk_set_add(struct ash_tk_set *set, enum ash_tk_type type,
 static void
 ash_tk_set_free(struct ash_tk_set *set)
 {
-    if (set->front) {
-        struct ash_tk *tk = set->front, *n;
-        do {
-            n = tk->next;
-            if (tk->str)
-                ash_free((void *)tk->str);
-            tk->str = NULL;
-            tk->next = NULL;
-            ash_free(tk);
-        } while((tk = n));
+    if (!set->front)
+        return;
 
-        set->front = NULL;
-    }
+    struct ash_tk *tk = set->front, *n;
+    do {
+        n = tk->next;
+        if (tk->str)
+            ash_free((void *)tk->str);
+        tk->str = NULL;
+        tk->next = NULL;
+        ash_free(tk);
+    } while((tk = n));
+
+    set->front = NULL;
     set->rear = NULL;
 }
 
@@ -194,9 +194,9 @@ int ash_lang_prompt(struct ash_tk_set *set)
         }
 
         for (; next != NULL; next = next->next) {
-            if (ash_lang_is_block(next->res))
+            if (ash_lang_is_block(next->type))
                 ++level;
-            else if (next->res == END_TK)
+            else if (next->type == END_TK)
                 --level;
         }
     } while (level != 0);

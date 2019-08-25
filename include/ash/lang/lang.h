@@ -182,10 +182,10 @@ enum ash_tk_type {
 };
 
 struct ash_tk {
-    enum ash_tk_type res;
-    int eos;
-    long line;
-    long offset;
+    enum ash_tk_type type;
+    bool eos;
+    size_t line;
+    size_t offset;
     const char *str;
     struct ash_tk *next;
 };
@@ -202,10 +202,10 @@ static inline void ash_tk_meta_init(struct ash_tk_meta *meta,
     meta->offset = offset;
 }
 
-extern int ash_tk_get(struct ash_tk **);
+extern enum ash_tk_type ash_tk_get(struct ash_tk **);
 extern struct ash_tk *ash_tk_next(struct ash_tk **);
-extern int ash_tk_cknext(struct ash_tk **);
-extern int ash_tk_eos(struct ash_tk **);
+extern enum ash_tk_type ash_tk_cknext(struct ash_tk **);
+extern bool ash_tk_eos(struct ash_tk **);
 extern bool ash_tk_get_eos(struct ash_tk **);
 extern const char *ash_tk_strcpy(struct ash_tk **);
 extern isize ash_tk_num(struct ash_tk **);
@@ -231,7 +231,7 @@ static inline bool ash_tk_set_empty(struct ash_tk_set *set)
 static inline void ash_tk_set_eos(struct ash_tk_set *set)
 {
     if (set->rear && !set->rear->eos)
-        set->rear->eos = 1;
+        set->rear->eos = true;
 }
 
 extern void ash_tk_set_add(struct ash_tk_set *, enum ash_tk_type,
