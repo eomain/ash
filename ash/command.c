@@ -31,6 +31,7 @@
 #include "ash/exit.h"
 #include "ash/export.h"
 #include "ash/help.h"
+#include "ash/history.h"
 #include "ash/io.h"
 #include "ash/ops.h"
 #include "ash/rand.h"
@@ -121,8 +122,8 @@ static struct ash_command commands[ ASH_COMMAND_NO ] = {
     [ ASH_COMMAND_HISTORY ] = {
         .command = ASH_COMMAND_HISTORY,
         .name    = "history",
-        .main    = NULL,
-        .usage   = NULL
+        .main    = ash_history,
+        .usage   = ash_history_usage
     },
 
     [ ASH_COMMAND_RAND ] = {
@@ -269,6 +270,14 @@ enum ash_command_name ash_command_find(const char *v)
                 v[3] == 'p' &&
                 !(v[4]))
                 return ASH_COMMAND_HELP;
+            else if (v[1] == 'i' &&
+                     v[2] == 's' &&
+                     v[3] == 't' &&
+                     v[4] == 'o' &&
+                     v[5] == 'r' &&
+                     v[6] == 'y' &&
+                     !v[7])
+                return ASH_COMMAND_HISTORY;
             break;
 
         case 'r':

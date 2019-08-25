@@ -38,6 +38,12 @@ static void ash_term_hist_init(struct ash_term_hist *hist)
         history(hist->hist, &hist->event, H_SETSIZE, ASH_HISTORY_SIZE);
 }
 
+static void ash_term_hist_clear(struct ash_term_hist *hist)
+{
+    if (hist->hist)
+        history(hist->hist, &hist->event, H_CLEAR);
+}
+
 static void ash_term_hist_load(struct ash_term_hist *hist)
 {
     assert(hist != NULL);
@@ -100,6 +106,11 @@ static void ash_term_init(struct ash_term *term, bool use_hist,
 
     el_set(term->edit, EL_PROMPT, prompt);
     el_set(term->edit, EL_EDITOR, "emacs");
+}
+
+void ash_term_clear(struct ash_term *term)
+{
+    ash_term_hist_clear(&term->hist);
 }
 
 static void ash_term_clean(struct ash_term *term)
