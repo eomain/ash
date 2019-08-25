@@ -164,6 +164,8 @@ enum ash_tk_type {
     ARW_TK,
     SCP_TK,
 
+    BS_TK,
+
     QMK_TK,
 
     LET_TK,

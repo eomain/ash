@@ -252,6 +252,7 @@ static const char *ash_token_names[] = {
     [ LE_TK  ]   = "<=",
     [ GE_TK  ]   = ">=",
     [ PIP_TK ]   = "|",
+    [ BS_TK  ]   = "\\",
     [ QMK_TK ]   = "?",
     [ VAR_TK ]   = "<id>",
     [ NUM_TK ]   = "<num>",

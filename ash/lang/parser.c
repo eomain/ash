@@ -1061,10 +1061,12 @@ static struct ast_command *parser_command(struct parser *p)
             return NULL;
         }
 
-        if (parser_end_of_statement(p) || parser_get_type(p) == NO_TK)
+        if (parser_end_of_statement(p) ||
+            parser_get_type(p) == NO_TK)
             break;
 
-        parser_get_next(p);
+        if (parser_get_next_type(p) == BS_TK)
+            parser_get_next(p);
     }
 
     command = ast_command_new(expr, length);

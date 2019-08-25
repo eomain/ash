@@ -56,6 +56,7 @@ static enum ash_tk_type lex_token_type(char c)
         case '\'':  return SQT_TK;
         case '\"':  return DQT_TK;
 
+        case '\\':  return BS_TK;
         case '|':   return PIP_TK;
         case '?':   return QMK_TK;
 
