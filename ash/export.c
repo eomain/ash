@@ -44,7 +44,7 @@ static ash_flag ash_export_option(const char *s)
     ash_flag options = ASH_FLAG_RESET;
 
     while ((c = *(s++))) {
-        switch (c){
+        switch (c) {
             case 'd':
                 options |= OVERRIDE;
                 break;
