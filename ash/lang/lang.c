@@ -58,12 +58,6 @@ ash_tk_get(struct ash_tk **tk)
         return NO_TK;
 }
 
-int
-ash_tk_valid(struct ash_tk **tk)
-{
-    return ash_tk_get(tk) != NO_TK;
-}
-
 enum ash_tk_type
 ash_tk_getnext(struct ash_tk **tk)
 {
@@ -144,7 +138,7 @@ ash_tk_set_add(struct ash_tk_set *set, enum ash_tk_type type,
 
     if (set->rear) {
         set->rear->next = tk;
-        set->rear = set->rear->next;
+        set->rear = tk;
     } else {
         set->front = set->rear = tk;
     }
@@ -188,7 +182,7 @@ int ash_lang_prompt(struct ash_tk_set *set)
         if (lex_scan_input(&s, ash_scan()))
             return -1;
 
-        if ((next = ash_tk_set_front(&s))) {
+        if ((next = s.front)) {
             set->rear->next = next;
             set->rear = s.rear;
         }
