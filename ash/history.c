@@ -19,7 +19,7 @@
 #include "ash/term/term.h"
 
 enum history_flag_option {
-    CLEAR = 1 << 1
+    CLEAR = 1 << 0
 };
 
 const char *ash_history_usage(void)

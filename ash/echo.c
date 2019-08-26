@@ -22,11 +22,11 @@
 
 enum echo_flag_option {
     /* no trailing newline */
-    LINE   = 1 << 1,
+    LINE   = 1 << 0,
     /* remove whitespace */
-    SPACE  = 1 << 2,
+    SPACE  = 1 << 1,
     /* format string */
-    FORMAT = 1 << 3
+    FORMAT = 1 << 2
 };
 
 const char *ash_echo_usage(void)
