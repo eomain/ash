@@ -174,12 +174,12 @@ struct ast_value *ast_value_literal(struct ast_literal *literal)
     return value;
 }
 
-struct ast_unary *ast_unary_new(enum ast_unary_op op, struct ast_value *value)
+struct ast_unary *ast_unary_new(enum ast_unary_op op, struct ast_expr *expr)
 {
     struct ast_unary *unary;
     unary = ash_alloc(sizeof *unary);
     unary->op = op;
-    unary->value = value;
+    unary->expr = expr;
     return unary;
 }
 

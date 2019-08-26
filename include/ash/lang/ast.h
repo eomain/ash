@@ -37,7 +37,8 @@ struct ast_path {
     struct ast_scope *path;
 };
 
-extern struct ast_path *ast_path_new(enum ash_module_path_type, size_t, struct ast_scope *);
+extern struct ast_path *ast_path_new(enum ash_module_path_type, size_t,
+                                     struct ast_scope *);
 
 struct ast_var {
     const char *id;
@@ -109,14 +110,15 @@ extern struct ast_composite *ast_composite_new(struct ast_expr *, size_t);
 
 struct ast_unary {
     enum ast_unary_op {
-        AST_UNARY_MINUS
+        AST_UNARY_MINUS,
+        AST_UNARY_NOT
     } op;
 
-    struct ast_value *value;
+    struct ast_expr *expr;
 };
 
 extern struct ast_unary *
-ast_unary_new(enum ast_unary_op, struct ast_value *);
+ast_unary_new(enum ast_unary_op, struct ast_expr *);
 
 struct ast_binary {
     enum ast_binary_op {
