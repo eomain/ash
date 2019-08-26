@@ -17,30 +17,10 @@
 
 # ash (acorn shell) test script
 
-def range(n)
-    return match [ $n ]
-         0 to  9 =>  "0 <= { $n } <= 9",
-        10 to 19 => "10 <= { $n } <= 19",
-        20 to 29 => "20 <= { $n } <= 29",
-        _ => "{ $n } >= 30"
-    end;
-end
+# prints out all command-line arguments
 
-def main()
-
-    for n in 1 to 20
-        echo "{ $n }:" match [ $n % 2 ]
-            0 => "even",
-            _ => "odd"
-        end;
+def main(argv)
+    for arg in $argv
+        echo $arg;
     end
-
-    def each(range)
-        for n in $range
-            echo "range({ $n }):" range($n);
-        end
-    end
-
-    each(0 to 50);
-
 end
