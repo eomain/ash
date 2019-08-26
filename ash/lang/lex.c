@@ -386,8 +386,7 @@ static inline bool lex_is_expr_type(enum ash_tk_type type)
     return (type == LS_TK || type == BQ_TK);
 }
 
-static void lex_symbol_var(struct lexer *lexer, struct ash_tk_set *set,
-                           enum ash_tk_type type)
+static void lex_symbol_var(struct lexer *lexer, enum ash_tk_type type)
 {
     enum ash_tk_type next;
     const char *string;
@@ -411,20 +410,19 @@ static void lex_symbol_var(struct lexer *lexer, struct ash_tk_set *set,
     lexer_token_add(lexer, type);
 }
 
-static void lex_symbol_default(struct lexer *lexer, struct ash_tk_set *set,
-                               enum ash_tk_type type)
+static void lex_symbol_default(struct lexer *lexer, enum ash_tk_type type)
 {
     if (type == WS_TK || type == NO_TK)
             return;
     else if (type == CM_TK)
         lexer_skip_comment(lexer);
     else if (type == AV_TK || type == VAR_TK)
-        lex_symbol_var(lexer, set, type);
+        lex_symbol_var(lexer, type);
     else if (type == EQ_TK) {
         if (lexer_assert_next(lexer, '>'))
             lexer_token_add(lexer, ARW_TK);
         else
-            lex_symbol_var(lexer, set, VAR_TK);
+            lex_symbol_var(lexer, VAR_TK);
     }
     else if (type == EOS_TK) {
         lexer_end_of_statement(lexer);
@@ -455,8 +453,7 @@ static inline char lex_expr_exit(char c)
         return c;
 }
 
-static void lex_symbol_expr(struct lexer *lexer, struct ash_tk_set *set,
-                            char exit)
+static void lex_symbol_expr(struct lexer *lexer, char exit)
 {
     char c;
     exit = lex_expr_exit(exit);
@@ -502,7 +499,7 @@ static void lex_symbol_expr(struct lexer *lexer, struct ash_tk_set *set,
         else if (c == '%')
             lexer_token_add(lexer, MD_TK);
         else
-            lex_symbol_default(lexer, set, lex_token_type(c));
+            lex_symbol_default(lexer, lex_token_type(c));
 
     } while (lexer_hasnext(lexer));
 }
@@ -511,9 +508,6 @@ static void lex_main(struct lexer *lexer)
 {
     char c;
     enum ash_tk_type type;
-    struct ash_tk_set *set;
-
-    set = lexer_token_set(lexer);
 
     while (lexer_hasnext(lexer)) {
         lexer_reset(lexer);
@@ -522,9 +516,9 @@ static void lex_main(struct lexer *lexer)
 
         if (lex_is_expr_type(type)) {
             lexer_token_add(lexer, type);
-            lex_symbol_expr(lexer, set, c);
+            lex_symbol_expr(lexer, c);
         } else {
-            lex_symbol_default(lexer, set, type);
+            lex_symbol_default(lexer, type);
         }
     }
 }
