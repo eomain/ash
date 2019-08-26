@@ -447,20 +447,26 @@ static void lex_symbol_default(struct lexer *lexer, struct ash_tk_set *set,
         lexer_token_add(lexer, type);
 }
 
+static inline char lex_expr_exit(char c)
+{
+    if (c == '[')
+        return ']';
+    else
+        return c;
+}
+
 static void lex_symbol_expr(struct lexer *lexer, struct ash_tk_set *set,
-                            enum ash_tk_type type)
+                            char exit)
 {
     char c;
-    char leave = ']';
-    if (type == BQ_TK)
-        leave = '`';
+    exit = lex_expr_exit(exit);
 
     do {
         lexer_reset(lexer);
         c = lexer_readnext(lexer);
 
-        if (c == leave) {
-            lexer_token_add(lexer, lex_token_type(leave));
+        if (c == exit) {
+            lexer_token_add(lexer, lex_token_type(exit));
             return;
         }
         else if (c == '[')
@@ -516,7 +522,7 @@ static void lex_main(struct lexer *lexer)
 
         if (lex_is_expr_type(type)) {
             lexer_token_add(lexer, type);
-            lex_symbol_expr(lexer, set, type);
+            lex_symbol_expr(lexer, set, c);
         } else {
             lex_symbol_default(lexer, set, type);
         }
