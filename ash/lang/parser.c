@@ -1056,6 +1056,7 @@ static struct ast_match *parser_match(struct parser *p)
 
 static struct ast_command *parser_command(struct parser *p)
 {
+    enum ash_tk_type type;
     struct ast_command *command = NULL;
     struct ast_expr *expr = NULL, *next = NULL;
     size_t length = 0;
@@ -1080,11 +1081,13 @@ static struct ast_command *parser_command(struct parser *p)
             return NULL;
         }
 
-        if (parser_end_of_statement(p) ||
-            parser_get_type(p) == NO_TK)
+        if (parser_end_of_statement(p))
             break;
 
-        if (parser_get_next_type(p) == BS_TK) {
+        if ((type = parser_get_next_type(p)) == NO_TK)
+            break;
+
+        if (type == BS_TK) {
             if (!parser_check_end(p)) {
                 parser_error_expec_msg(p,
                     "'newline' following '\\'"
