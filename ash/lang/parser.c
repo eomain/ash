@@ -204,6 +204,12 @@ parser_check_next(struct parser *p)
 }
 
 static inline bool
+parser_check_end(struct parser *p)
+{
+    return ash_tk_eos(&p->token);
+}
+
+static inline bool
 parser_end_of_statement(struct parser *p)
 {
     return ash_tk_get_eos(&p->token);
@@ -1078,8 +1084,15 @@ static struct ast_command *parser_command(struct parser *p)
             parser_get_type(p) == NO_TK)
             break;
 
-        if (parser_get_next_type(p) == BS_TK)
+        if (parser_get_next_type(p) == BS_TK) {
+            if (!parser_check_end(p)) {
+                parser_error_expec_msg(p,
+                    "'newline' following '\\'"
+                );
+                return NULL;
+            }
             parser_get_next(p);
+        }
     }
 
     command = ast_command_new(expr, length);
