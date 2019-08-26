@@ -440,23 +440,28 @@ unary_op(enum ast_binary_op op, struct ash_obj *a)
     const struct ash_base_ops *ops;
     ops = ash_obj_get_ops(a);
 
-    if (op == AST_UNARY_MINUS)
+    if (op == AST_UNARY_MINUS) {
         unary = ops->sb;
+    } else if (op == AST_UNARY_NOT) {
+        struct ash_obj *o;
+        if ((o = ash_obj_bool(a)))
+            ash_bool_negate(o);
+        return o;
+    }
 
-    if (!unary)
-        ash_print("invalid operation!");
-    else
+    if (unary)
         obj = unary(a);
 
     return obj;
 }
 
 static struct ash_obj *
-runtime_eval_unary(struct ash_runtime_context *context, struct ast_unary *unary)
+runtime_eval_unary(struct ash_runtime_context *context,
+                   struct ast_unary *unary)
 {
     struct ash_obj *a;
 
-    if (!(a = runtime_eval_value(context, unary->value)))
+    if (!(a = runtime_eval_expr(context, unary->expr)))
         return NULL;
     return unary_op(unary->op, a);
 }
@@ -491,7 +496,6 @@ binary_op(enum ast_binary_op op, struct ash_obj *a, struct ash_obj *b)
             break;
     }
 
-    /*ash_print("invalid operation!");*/
     if (bin)
         obj = bin(a, b);
 
@@ -508,13 +512,8 @@ runtime_eval_binary(struct ash_runtime_context *context, struct ast_binary *bin)
     if (!a || !b)
         return NULL;
 
-    if (!ash_obj_type_eq(a, b)) {
-        /*ash_print(
-            "type error: illegal binary operation on type `%s` and `%s`\n",
-            ash_obj_name(a), ash_obj_name(b)
-        );*/
+    if (!ash_obj_type_eq(a, b))
         return NULL;
-    }
 
     struct ash_obj *obj;
     obj = binary_op(bin->op, a, b);
@@ -586,7 +585,8 @@ logical_op(enum ast_logical_op op, struct ash_obj *a, struct ash_obj *b)
     struct ash_obj *obj = NULL;
     struct ash_obj *(*logical)(struct ash_obj *, struct ash_obj *) = NULL;
     const struct ash_base_ops *ops;
-    ops = ash_obj_get_ops(a);
+    if (!(ops = ash_obj_get_ops(a)))
+        return NULL;
 
     switch (op) {
         case AST_LOGICAL_AND:

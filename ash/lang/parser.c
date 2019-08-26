@@ -846,11 +846,24 @@ static struct ast_expr *parser_logical_expr(struct parser *p, struct ast_expr *e
 
 static struct ast_expr *parser_expr_logical(struct parser *p)
 {
+    bool negate = false;
     struct ast_expr *expr;
+
+    if (parser_get_type(p) == NT_TK) {
+        negate = true;
+        parser_get_next(p);
+    }
     expr = parser_expr_cmp(p);
 
+    if (negate) {
+        struct ast_unary *unary;
+        unary = ast_unary_new(AST_UNARY_NOT, expr);
+        expr = ast_expr_new(AST_EXPR_UNARY, unary);
+    }
+
     if (parser_is_logical_ops(parser_check_next(p)))
-        return parser_logical_expr(p, expr);
+        expr = parser_logical_expr(p, expr);
+
     return expr;
 }
 
