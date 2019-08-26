@@ -92,6 +92,7 @@ bool_or(struct ash_obj *a, struct ash_obj *b)
 static struct ash_obj *
 boolean(struct ash_obj *obj)
 {
+    ash_obj_inc_rc(obj);
     return obj;
 }
 
@@ -173,6 +174,15 @@ void ash_bool_set(struct ash_obj *obj, bool value)
         struct ash_bool *ab;
         ab = (struct ash_bool *) obj;
         ab->value = value;
+    }
+}
+
+void ash_bool_negate(struct ash_obj *obj)
+{
+    if (ash_base_derived(&base, obj)) {
+        struct ash_bool *ab;
+        ab = (struct ash_bool *) obj;
+        ab->value = !ab->value;
     }
 }
 

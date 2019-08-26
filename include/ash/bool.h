@@ -25,5 +25,6 @@ extern struct ash_obj *ash_bool_new(void);
 extern bool ash_bool_get(struct ash_obj *);
 extern void ash_bool_set(struct ash_obj *, bool);
 extern struct ash_obj *ash_bool_from(bool);
+extern void ash_bool_negate(struct ash_obj *);
 
 #endif
