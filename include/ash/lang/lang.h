@@ -70,8 +70,6 @@ static inline const char *input_get_name(struct input *input)
     return NULL;
 }
 
-extern int ash_input_exec(struct input *);
-
 /*
 contains a list of symbols representing all
 recognised tokens in ash
