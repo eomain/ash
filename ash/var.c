@@ -115,8 +115,10 @@ void ash_var_bind(struct ash_var *var, struct ash_obj *obj)
     var->obj = obj;
 
     if (!ash_obj_nil(obj)) {
-        obj->bound = true;
-        ash_obj_inc_rc(obj);
+        if (obj->bound)
+            ash_obj_inc_rc(obj);
+        else
+            obj->bound = true;
     }
 }
 
@@ -127,8 +129,10 @@ void ash_var_bind_override(struct ash_var *var, struct ash_obj *obj)
     var->obj = obj;
 
     if (!ash_obj_nil(obj)) {
-        obj->bound = true;
-        ash_obj_inc_rc(obj);
+        if (obj->bound)
+            ash_obj_inc_rc(obj);
+        else
+            obj->bound = true;
     }
 }
 
@@ -592,8 +596,10 @@ ash_module_path(struct ash_module *mod, struct ash_module_path *path)
     else if (type == ASH_PATH_REL)
         m = (mod) ? mod->parent: NULL;
 
-    if (!(m = ash_module_search(m, p, length)))
-        m = ash_module_search(ash_module_root(), p, length);
+    if (!(m = ash_module_search(m, p, length))) {
+        if (type != ASH_PATH_ABS)
+            m = ash_module_search(ash_module_root(), p, length);
+    }
 
     return m;
 }
