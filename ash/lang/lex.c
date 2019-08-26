@@ -23,9 +23,6 @@
 #include "ash/lang/lang.h"
 #include "ash/lang/lex.h"
 
-#define ASH_LANG_TRUE  "1"
-#define ASH_LANG_FALSE "0"
-
 static inline bool lex_is_ws(char c)
 {
     return (c == ' '  ||
