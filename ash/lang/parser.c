@@ -1207,6 +1207,7 @@ static struct ast_stm *parser_stm(struct parser *p)
                 } else {
                     ntype = AST_NODE_COMMAND;
                     node = parser_command(p);
+                    break;
                 }
 
                 parser_end_of_statement(p);
