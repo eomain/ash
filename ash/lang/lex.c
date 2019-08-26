@@ -309,8 +309,9 @@ static inline bool lexer_assert_next(struct lexer *lexer, char c)
     return false;
 }
 
-static inline void lexer_token_add_string(struct lexer *lexer, enum ash_tk_type type,
-                                   const char *string)
+static inline void lexer_token_add_string(struct lexer *lexer,
+                                          enum ash_tk_type type,
+                                          const char *string)
 {
     size_t offset;
     struct ash_tk_set *set;
