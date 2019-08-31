@@ -354,7 +354,7 @@ static const char *lexer_get_string(struct lexer *lexer)
 static const char *lexer_get_qstring(struct lexer *lexer)
 {
     if (!lexer_find_char(lexer, '"')) {
-        /* TODO: error */
+        lexer->err = true;
         return NULL;
     }
     lexer_readnext(lexer);
@@ -438,7 +438,9 @@ static void lex_symbol_default(struct lexer *lexer, enum ash_tk_type type)
         lexer_token_add_string(lexer, NUM_TK, lexer_get_string(lexer));
     }
     else if (type == DQT_TK) {
-        lexer_token_add_string(lexer, type, lexer_get_qstring(lexer));
+        const char *string;
+        if ((string = lexer_get_qstring(lexer)))
+            lexer_token_add_string(lexer, type, string);
     } else
         lexer_token_add(lexer, type);
 }
@@ -502,7 +504,7 @@ static void lex_symbol_expr(struct lexer *lexer, char exit)
     } while (lexer_hasnext(lexer));
 }
 
-static void lex_main(struct lexer *lexer)
+static int lex_main(struct lexer *lexer)
 {
     char c;
     enum ash_tk_type type;
@@ -518,14 +520,19 @@ static void lex_main(struct lexer *lexer)
         } else {
             lex_symbol_default(lexer, type);
         }
+
+        if (lexer_get_error(lexer))
+            return -1;
     }
+
+    return 0;
 }
 
 int lex_scan_input(struct ash_tk_set *set, const char *input)
 {
     struct lexer lexer;
     lexer_init(&lexer, input, set);
-    lex_main(&lexer);
-
+    if (lex_main(&lexer))
+        return -1;
     return 0;
 }
