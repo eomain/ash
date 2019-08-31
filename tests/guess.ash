@@ -22,7 +22,7 @@ def main()
 
     def rand()
         rand;
-        return `$__EXIT__ % $UPPER_BOUND`;
+        return `$__RESULT__ % $UPPER_BOUND`;
     end
 
     def input(prompt)
