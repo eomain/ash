@@ -205,11 +205,6 @@ void ash_command_usage(enum ash_command_name command)
 enum ash_command_name ash_command_find(const char *v)
 {
     switch (v[0]) {
-        case '.':
-            if (!v[1])
-                return ASH_COMMAND_SOURCE;
-            break;
-
         case 'b':
             if (v[1] == 'u' &&
                 v[2] == 'i' &&
@@ -239,7 +234,7 @@ enum ash_command_name ash_command_find(const char *v)
             break;
 
         case 'e':
-            if (v[1] == 'x'){
+            if (v[1] == 'x') {
                 if (v[2] == 'e' &&
                     v[3] == 'c' &&
                     !v[4])
