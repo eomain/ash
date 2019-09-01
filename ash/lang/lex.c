@@ -468,8 +468,12 @@ static void lex_symbol_expr(struct lexer *lexer, char exit)
         }
         else if (c == '[')
             lexer_token_add(lexer, LS_TK);
-        else if (c == '=')
-            lexer_token_add(lexer, EQ_TK);
+        else if (c == '=') {
+            if (lexer_assert_next(lexer, '>'))
+                lexer_token_add(lexer, ARW_TK);
+            else
+                lexer_token_add(lexer, EQ_TK);
+        }
         else if (c == '!') {
             if (lexer_assert_next(lexer, '='))
                 lexer_token_add(lexer, NE_TK);
