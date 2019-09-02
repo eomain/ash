@@ -23,6 +23,11 @@
 #include "ash/script.h"
 #include "ash/type.h"
 
+enum input_prompt_type {
+    INPUT_PROMPT_BLOCK,
+    INPUT_PROMPT_COMMAND
+};
+
 struct input {
     union {
         const char *text;
@@ -239,6 +244,6 @@ extern void ash_tk_set_add(struct ash_tk_set *, enum ash_tk_type,
 
 extern struct ash_tk *ash_tk_set_front(struct ash_tk_set *);
 
-extern int ash_lang_prompt(struct ash_tk_set *);
+extern int ash_lang_prompt(struct ash_tk_set *, enum input_prompt_type);
 
 #endif

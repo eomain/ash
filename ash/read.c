@@ -36,7 +36,7 @@ const char *ash_read_usage(void)
 static int ash_read_input(const char *var, struct ash_runtime_env *renv)
 {
     if (!var) {
-        ash_scan();
+        ash_scan(NULL);
         return -1;
     }
 
@@ -63,7 +63,8 @@ static int ash_read_input(const char *var, struct ash_runtime_env *renv)
     return -1;
 }
 
-int ash_read_env(int argc, const char * const *argv, struct ash_command_env *env)
+int ash_read_env(int argc, const char * const *argv,
+                 struct ash_command_env *env)
 {
     const char *opt;
     const char *prompt = NULL;

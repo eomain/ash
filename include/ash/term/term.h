@@ -22,11 +22,8 @@
 
 extern const struct ash_unit_module ash_module_term;
 
-struct ash_term;
-extern struct ash_term term;
-
-extern const char *ash_term_get(struct ash_term *);
+extern const char *ash_term_get(const char *prompt);
 extern const char *ash_term_get_default(void);
-extern void ash_term_clear(struct ash_term *);
+extern void ash_term_clear(void);
 
 #endif

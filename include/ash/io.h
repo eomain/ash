@@ -29,7 +29,7 @@ extern const struct ash_unit_module ash_module_io;
 extern const char *ash_io_read(const char *);
 extern void ash_io_silent(bool);
 
-extern const char *ash_scan(void);
+extern const char *ash_scan(const char *);
 extern int   ash_scan_buffer(char *, size_t);
 extern void  ash_print(const char *, ...);
 extern void  ash_vprint(const char *, va_list);

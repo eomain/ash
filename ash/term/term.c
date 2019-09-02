@@ -15,7 +15,9 @@
 */
 
 #include <assert.h>
-#include <histedit.h>
+#include <editline/readline.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "ash/ash.h"
 #include "ash/mem.h"
@@ -27,131 +29,81 @@
 #define ASH_HISTORY_NAME "~.ash_history"
 #define ASH_HISTORY_SIZE 500
 
-struct ash_term_hist {
-    History *hist;
-    HistEvent event;
-};
-
-static void ash_term_hist_init(struct ash_term_hist *hist)
+void ash_term_clear(void)
 {
-    if ((hist->hist = history_init()))
-        history(hist->hist, &hist->event, H_SETSIZE, ASH_HISTORY_SIZE);
+    clear_history();
 }
 
-static void ash_term_hist_clear(struct ash_term_hist *hist)
+static inline const char *history(void)
 {
-    if (hist->hist)
-        history(hist->hist, &hist->event, H_CLEAR);
-}
-
-static void ash_term_hist_load(struct ash_term_hist *hist)
-{
-    assert(hist != NULL);
-
     const char *name;
     name = ash_ops_tilde(ASH_HISTORY_NAME);
     assert(name);
-    history(hist->hist, &hist->event, H_LOAD, name);
-    ash_free((char *) name);
+    return name;
 }
 
-static void ash_term_hist_save(struct ash_term_hist *hist)
+static void ash_term_clean(void)
 {
-    assert(hist != NULL);
-
     const char *name;
-    name = ash_ops_tilde(ASH_HISTORY_NAME);
-    assert(name);
-    history(hist->hist, &hist->event, H_SAVE, name);
-    ash_free((char *) name);
+    name = history();
+    write_history(name);
 }
 
-static inline History *ash_term_hist_get(struct ash_term_hist *hist)
+static inline bool
+ash_term_hist(const char *line)
 {
-    return hist->hist;
+    if (line && (*line)) {
+        add_history(line);
+        return true;
+    }
+    return false;
 }
 
-static inline bool hist_entry_valid(const char *input)
+static inline char *
+newline(const char *input)
 {
-    return (input && (*input != '\n'));
+    size_t len;
+    char *s;
+
+    len = strlen(input);
+    s = ash_zalloc((len + 1));
+    strcpy(s, input);
+    s[len] = '\n';
+    return s;
 }
 
-static void ash_term_hist_append(struct ash_term_hist *hist, const char *input)
+const char *ash_term_get(const char *prompt)
 {
-    if (hist_entry_valid(input))
-        history(hist->hist, &hist->event, H_ENTER, input);
-}
+    char *input = NULL, *s;
 
-struct ash_term {
-    EditLine *edit;
-    struct ash_term_hist hist;
-};
+    if ((input = readline(prompt))) {
+        ash_term_hist(input);
 
-struct ash_term term;
-struct ash_term dterm;
-
-static void ash_term_init(struct ash_term *term, bool use_hist,
-                          const char *(*prompt)(EditLine *))
-{
-    term->edit = el_init(PNAME, stdin, stdout, stderr);
-    ash_term_hist_init(&term->hist);
-
-    if (use_hist) {
-        History *hist;
-        if ((hist = ash_term_hist_get(&term->hist))) {
-            ash_term_hist_load(&term->hist);
-            el_set(term->edit, EL_HIST, history, hist);
+        if ((s = newline(input))) {
+            free(input);
+            input = s;
         }
     }
-
-    el_set(term->edit, EL_PROMPT, prompt);
-    el_set(term->edit, EL_EDITOR, "emacs");
-}
-
-void ash_term_clear(struct ash_term *term)
-{
-    ash_term_hist_clear(&term->hist);
-}
-
-static void ash_term_clean(struct ash_term *term)
-{
-    ash_term_hist_save(&term->hist);
-}
-
-const char *ash_term_get(struct ash_term *term)
-{
-    int read = 0;
-    const char *input = NULL;
-    assert(term->edit);
-
-    if ((input = el_gets(term->edit, &read)))
-        ash_term_hist_append(&term->hist, input);
     return input;
 }
 
 const char *ash_term_get_default(void)
 {
-    int read = 0;
-    const char *input = NULL;
-    assert(dterm.edit);
-    input = el_gets(dterm.edit, &read);
-    return input;
-}
-
-static const char *prompt(EditLine *e)
-{
-    return "";
+    return ash_term_get(NULL);
 }
 
 static void init(void)
 {
-    ash_term_init(&term, true, prompt);
-    ash_term_init(&dterm, false, prompt);
+    rl_initialize();
+
+    const char *name;
+    name = history();
+    read_history(name);
 }
 
 static void destroy(void)
 {
-    ash_term_clean(&term);
+    ash_term_clean();
 }
 
 const struct ash_unit_module ash_module_term = {

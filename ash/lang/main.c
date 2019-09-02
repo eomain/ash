@@ -26,7 +26,8 @@
 static int ash_main_scan(struct input *input, struct ash_tk_set *set)
 {
     const char *content;
-    content = input_text_content(input);
+    if (!(content = input_text_content(input)))
+        return -1;
 
     if (lex_scan_input(set, content))
         return -1;
@@ -52,9 +53,8 @@ static inline
 void ash_main_prompt(struct input *input)
 {
     const char *text;
-    /*ash_prompt();*/
 
-    if ((text = ash_scan()))
+    if ((text = ash_scan("$ ")))
         input_text_init(input, text);
 }
 

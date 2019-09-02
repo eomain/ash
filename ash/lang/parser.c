@@ -74,20 +74,20 @@ parser_get_source(struct parser *p)
 }
 
 static void
-parser_prompt(struct parser *p)
+parser_prompt(struct parser *p, enum input_prompt_type type)
 {
-    if (ash_lang_prompt(p->set))
+    if (ash_lang_prompt(p->set, type))
         p->error = true;
 }
 
 static inline void
-parser_assert_prompt(struct parser *p)
+parser_assert_prompt(struct parser *p, enum input_prompt_type type)
 {
     if (!p->interactive)
         return;
 
     if (!parser_check_next(p))
-        parser_prompt(p);
+        parser_prompt(p, type);
 }
 
 static inline struct ast_path *
@@ -552,7 +552,7 @@ static struct ast_if *parser_if(struct parser *p)
         parser_block_inc(p);
 
     expr = parser_expr_block(p);
-    parser_assert_prompt(p);
+    parser_assert_prompt(p, INPUT_PROMPT_BLOCK);
 
     block = parser_get_block(p);
     if (parser_get_next_type(p) != END_TK)
@@ -626,7 +626,7 @@ static struct ast_while *parser_while(struct parser *p)
     parser_assert(p, DO_TK);
     parser_lblock_inc(p);
     expr = parser_expr_block(p);
-    parser_assert_prompt(p);
+    parser_assert_prompt(p, INPUT_PROMPT_BLOCK);
 
     if (parser_get_next_type(p) != END_TK)
         stm = parser_body_block(p);
@@ -669,7 +669,7 @@ static struct ast_for *parser_for(struct parser *p)
         parser_error_expec_msg(p, "<iterable>");
         return NULL;
     }
-    parser_assert_prompt(p);
+    parser_assert_prompt(p, INPUT_PROMPT_BLOCK);
 
     if (parser_check_next(p) != END_TK) {
         parser_get_next(p);
@@ -1094,6 +1094,7 @@ static struct ast_command *parser_command(struct parser *p)
                 );
                 return NULL;
             }
+            parser_assert_prompt(p, INPUT_PROMPT_COMMAND);
             parser_get_next(p);
         }
     }
@@ -1318,7 +1319,7 @@ static struct ast_function *parser_function(struct parser *p)
     } else
         parser_assert_next(p, RP_TK);
 
-    parser_assert_prompt(p);
+    parser_assert_prompt(p, INPUT_PROMPT_BLOCK);
     parser_get_next(p);
     stm = parser_function_block(p);
     parser_assert(p, END_TK);
@@ -1486,6 +1487,7 @@ static struct ast_module *parser_module(struct parser *p)
     parser_assert(p, MOD_TK);
     parser_assert_next(p, VAR_TK);
     name = parser_get_str(p);
+    parser_assert_prompt(p, INPUT_PROMPT_BLOCK);
     parser_get_next(p);
     stm = parser_module_block(p);
     module = ast_module_new(name, stm);

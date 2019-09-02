@@ -164,28 +164,61 @@ ash_tk_set_free(struct ash_tk_set *set)
     set->rear = NULL;
 }
 
-static inline bool ash_lang_is_block(enum ash_tk_type type)
+static void
+ash_tk_set_append(struct ash_tk_set *set, struct ash_tk_set *s)
 {
-    return (type == IF_TK || type == DO_TK ||
-            type == FOR_TK || type == DEF_TK);
+    set->rear->next = s->front;
+    set->rear = s->rear;
 }
 
-int ash_lang_prompt(struct ash_tk_set *set)
+static inline bool ash_lang_is_block(enum ash_tk_type type)
 {
-    int level = 1;
+    return (type == IF_TK  || type == DO_TK  ||
+            type == FOR_TK || type == DEF_TK ||
+            type == MOD_TK);
+}
+
+static inline struct ash_tk *
+prompt(struct ash_tk_set *set, struct ash_tk_set *s)
+{
+    struct ash_tk *token;
+    ash_tk_set_init(s);
+    if (lex_scan_input(s, ash_scan("| ")))
+        return NULL;
+
+    if ((token = s->front))
+        ash_tk_set_append(set, s);
+
+    return token;
+}
+
+static int prompt_command(struct ash_tk_set *set)
+{
+    struct ash_tk *next;
+    struct ash_tk_set s;
+
+    for (;;) {
+        if (!(next = prompt(set, &s)))
+            return -1;
+
+        for (; next != NULL; next = next->next) {
+            if (next->type == SEM_TK)
+                return 0;
+        }
+    }
+
+    return 0;
+}
+
+static int prompt_block(struct ash_tk_set *set)
+{
+    long level = 1;
     struct ash_tk *next;
     struct ash_tk_set s;
 
     do {
-        ash_tk_set_init(&s);
-        ash_prompt_next();
-        if (lex_scan_input(&s, ash_scan()))
+        if (!(next = prompt(set, &s)))
             return -1;
-
-        if ((next = s.front)) {
-            set->rear->next = next;
-            set->rear = s.rear;
-        }
 
         for (; next != NULL; next = next->next) {
             if (ash_lang_is_block(next->type))
@@ -195,6 +228,15 @@ int ash_lang_prompt(struct ash_tk_set *set)
         }
     } while (level != 0);
 
+    return 0;
+}
+
+int ash_lang_prompt(struct ash_tk_set *set, enum input_prompt_type type)
+{
+    if (type == INPUT_PROMPT_COMMAND)
+        return prompt_command(set);
+    else if (type == INPUT_PROMPT_BLOCK)
+        return prompt_block(set);
     return 0;
 }
 

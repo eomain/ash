@@ -16,7 +16,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <histedit.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -97,9 +96,9 @@ int ash_scan_buffer(char *buf, size_t nbytes)
     return -1;
 }
 
-const char *ash_scan(void)
+const char *ash_scan(const char *prompt)
 {
-    return ash_term_get(&term);
+    return ash_term_get(prompt);
 }
 
 void ash_print(const char *fmt, ...)
@@ -110,16 +109,22 @@ void ash_print(const char *fmt, ...)
     va_end(ap);
 }
 
-static bool silent = false;
+struct ash_io_setting {
+    bool silent;
+};
+
+static struct ash_io_setting setting = {
+    .silent = false
+};
 
 void ash_io_silent(bool value)
 {
-    silent = value;
+    setting.silent = value;
 }
 
 void ash_vprint(const char *fmt, va_list ap)
 {
-    if (!silent)
+    if (!setting.silent)
         vfprintf(stdout, fmt, ap);
     ash_flush();
 }
