@@ -66,7 +66,7 @@ int ash_history(int argc, const char * const *argv)
     }
 
     if (options & CLEAR)
-        ash_term_clear(&term);
+        ash_term_clear();
 
     return ASH_STATUS_OK;
 }
