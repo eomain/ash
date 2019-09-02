@@ -175,9 +175,9 @@ def import()
             end
         end);
 
-        #if [ !$status ]
-        #    return;
-        #end
+        if [ $status = $Ok ]
+           return;
+        end
     end
 end
 
