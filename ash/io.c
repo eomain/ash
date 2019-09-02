@@ -101,6 +101,11 @@ const char *ash_scan(const char *prompt)
     return ash_term_get(prompt);
 }
 
+const char *ash_scan_prompt(const char *prompt)
+{
+    return ash_term_get_raw(prompt);
+}
+
 void ash_print(const char *fmt, ...)
 {
     va_list ap;

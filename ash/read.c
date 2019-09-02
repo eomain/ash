@@ -35,29 +35,18 @@ const char *ash_read_usage(void)
 
 static int ash_read_input(const char *var, struct ash_runtime_env *renv)
 {
-    if (!var) {
-        ash_scan(NULL);
-        return -1;
-    }
+    const char *input;
 
-    static char input[MAX_INPUT_SIZE];
-    memset(input, 0, MAX_INPUT_SIZE);
-
-    if (ash_scan_buffer(input, MAX_INPUT_SIZE) == 0) {
-        size_t len = strlen(input) + 1;
-        if (len < MAX_INPUT_SIZE) {
-            char *n;
-            if ((n = strchr(input, '\n'))) {
-                *n = '\0';
-                len--;
-            }
+    if ((input = ash_scan_prompt(NULL))) {
+        if (!var) {
+            ash_free((char *)input);
+            return -1;
         }
 
         struct ash_obj *obj;
         obj = ash_str_from(ash_strcpy(input));
         runtime_set_var(renv, var, obj);
         return 0;
-
     }
 
     return -1;

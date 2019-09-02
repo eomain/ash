@@ -87,6 +87,15 @@ const char *ash_term_get(const char *prompt)
     return input;
 }
 
+const char *ash_term_get_raw(const char *prompt)
+{
+    char *input = NULL;
+
+    if ((input = readline(prompt)))
+        ash_term_hist(input);
+    return input;
+}
+
 const char *ash_term_get_default(void)
 {
     return ash_term_get(NULL);
