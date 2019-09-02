@@ -80,22 +80,6 @@ const char *ash_io_read(const char *name)
     return content;
 }
 
-int ash_scan_buffer(char *buf, size_t nbytes)
-{
-    const char *input;
-    assert(buf);
-    memset(buf, 0, nbytes);
-
-    if ((input = ash_term_get_default())) {
-        size_t len;
-        len = strlen(input);
-        len = (nbytes < len) ? nbytes: len;
-        strncpy(buf, input, len);
-        return 0;
-    }
-    return -1;
-}
-
 const char *ash_scan(const char *prompt)
 {
     return ash_term_get(prompt);
