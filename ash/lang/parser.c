@@ -552,6 +552,10 @@ static struct ast_if *parser_if(struct parser *p)
         parser_block_inc(p);
 
     expr = parser_expr_block(p);
+    if (parser_has_error(p)) {
+        /* TODO: free */
+        return NULL;
+    }
     parser_assert_prompt(p, INPUT_PROMPT_BLOCK);
 
     block = parser_get_block(p);
@@ -626,6 +630,10 @@ static struct ast_while *parser_while(struct parser *p)
     parser_assert(p, DO_TK);
     parser_lblock_inc(p);
     expr = parser_expr_block(p);
+    if (parser_has_error(p)) {
+        /* TODO: free */
+        return NULL;
+    }
     parser_assert_prompt(p, INPUT_PROMPT_BLOCK);
 
     if (parser_get_next_type(p) != END_TK)
@@ -1319,6 +1327,10 @@ static struct ast_function *parser_function(struct parser *p)
     } else
         parser_assert_next(p, RP_TK);
 
+    if (parser_has_error(p)) {
+        /* TODO: free */
+        return NULL;
+    }
     parser_assert_prompt(p, INPUT_PROMPT_BLOCK);
     parser_get_next(p);
     stm = parser_function_block(p);
