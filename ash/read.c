@@ -30,7 +30,7 @@
 
 const char *ash_read_usage(void)
 {
-    return "read input from standard input";
+    return "read from standard input";
 }
 
 static int ash_read_input(const char *var, const char *prompt,
