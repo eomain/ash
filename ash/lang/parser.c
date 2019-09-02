@@ -1087,10 +1087,10 @@ static struct ast_command *parser_command(struct parser *p)
         if ((type = parser_get_next_type(p)) == NO_TK)
             break;
 
-        if (type == BS_TK) {
+        if (type == CO_TK) {
             if (!parser_check_end(p)) {
                 parser_error_expec_msg(p,
-                    "'newline' following '\\'"
+                    "'newline' following ','"
                 );
                 return NULL;
             }

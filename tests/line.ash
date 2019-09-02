@@ -18,10 +18,10 @@
 # ash (acorn shell) test script
 
 def main()
-    echo \
-        "This" \
-        "is"   \
-        "a"    \
-        "multi-line" \
+    echo,
+        "This",
+        "is",
+        "a",
+        "multi-line",
         "command";
 end
