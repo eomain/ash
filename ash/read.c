@@ -33,11 +33,12 @@ const char *ash_read_usage(void)
     return "read input from standard input";
 }
 
-static int ash_read_input(const char *var, struct ash_runtime_env *renv)
+static int ash_read_input(const char *var, const char *prompt,
+                          struct ash_runtime_env *renv)
 {
     const char *input;
 
-    if ((input = ash_scan_prompt(NULL))) {
+    if ((input = ash_scan_prompt(prompt))) {
         if (!var) {
             ash_free((char *)input);
             return -1;
@@ -76,8 +77,5 @@ int ash_read_env(int argc, const char * const *argv,
         }
     }
 
-    if (prompt)
-        ash_print(prompt);
-
-    return ash_read_input(var, env->env);
+    return ash_read_input(var, prompt, env->env);
 }
