@@ -1047,6 +1047,12 @@ static struct ast_match *parser_match(struct parser *p)
     }
     parser_assert(p, RS_TK);
 
+    if (parser_has_error(p)) {
+        /* TODO: free */
+        return NULL;
+    }
+    parser_assert_prompt(p, INPUT_PROMPT_BLOCK);
+
     if (parser_get_next_type(p) != END_TK) {
         if (!(parser_is_otherwise(p))) {
             ecase = parser_case(p);

@@ -175,7 +175,7 @@ static inline bool ash_lang_is_block(enum ash_tk_type type)
 {
     return (type == IF_TK  || type == DO_TK  ||
             type == FOR_TK || type == DEF_TK ||
-            type == MOD_TK);
+            type == MOD_TK || type == MAT_TK);
 }
 
 static inline struct ash_tk *
@@ -192,6 +192,8 @@ prompt(struct ash_tk_set *set, struct ash_tk_set *s)
     return token;
 }
 
+static int prompt_block(struct ash_tk_set *);
+
 static int prompt_command(struct ash_tk_set *set)
 {
     struct ash_tk *next;
@@ -199,9 +201,15 @@ static int prompt_command(struct ash_tk_set *set)
 
     for (;;) {
         if (!(next = prompt(set, &s)))
-            return -1;
+            continue;
 
         for (; next != NULL; next = next->next) {
+            if (ash_lang_is_block(next->type)) {
+                if (prompt_block(set))
+                    return -1;
+                next = set->rear;
+            }
+
             if (next->type == SEM_TK)
                 return 0;
         }
@@ -218,7 +226,7 @@ static int prompt_block(struct ash_tk_set *set)
 
     do {
         if (!(next = prompt(set, &s)))
-            return -1;
+            continue;
 
         for (; next != NULL; next = next->next) {
             if (ash_lang_is_block(next->type))
