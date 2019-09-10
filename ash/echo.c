@@ -113,8 +113,10 @@ static void ash_echo_format(const char *fmt)
 
 int ash_echo(int argc, const char * const *argv)
 {
-    if (argc == 1)
+    if (argc == 1) {
+        ash_putchar('\n');
         return ASH_STATUS_OK;
+    }
 
     int start = 1;
     ash_flag options = ASH_FLAG_RESET;
