@@ -17,6 +17,8 @@
 #ifndef ASH_TUPLE_H
 #define ASH_TUPLE_H
 
+#include <stddef.h>
+
 #include "ash/obj.h"
 #include "ash/type.h"
 
@@ -26,5 +28,6 @@ extern struct ash_obj *ash_tuple_from(size_t, struct ash_obj **);
 extern void ash_tuple_append(struct ash_obj *, struct ash_obj *);
 extern struct ash_obj *ash_tuple_get(struct ash_obj *, size_t);
 extern void ash_tuple_set(struct ash_obj *, size_t, struct ash_obj *);
+extern size_t ash_tuple_len(struct ash_obj *);
 
 #endif

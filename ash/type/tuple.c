@@ -35,7 +35,7 @@ struct ash_tuple {
 };
 
 static void dealloc(struct ash_obj *);
-static size_t ash_tuple_length(struct ash_tuple *);
+static size_t length(struct ash_tuple *);
 static struct ash_obj *get(struct ash_tuple *, size_t);
 static struct option iter(struct ash_obj *, size_t);
 
@@ -76,7 +76,7 @@ static struct option iter(struct ash_obj *value, size_t pos)
     struct ash_obj *obj;
     tuple = (struct ash_tuple *) value;
 
-    if (pos < ash_tuple_length(tuple))
+    if (pos < length(tuple))
         option_some(&opt, get(tuple, pos));
     else
         option_none(&opt);
@@ -142,7 +142,7 @@ static void append(struct ash_tuple *tuple, struct ash_obj *value)
     tuple->len++;
 }
 
-static size_t ash_tuple_length(struct ash_tuple *tuple)
+static size_t length(struct ash_tuple *tuple)
 {
     return tuple->len;
 }
@@ -213,4 +213,14 @@ ash_tuple_get(struct ash_obj *obj, size_t pos)
         return get(tuple, pos);
     }
     return NULL;
+}
+
+size_t ash_tuple_len(struct ash_obj *obj)
+{
+    if (ash_base_derived(&base, obj)) {
+        struct ash_tuple *tuple;
+        tuple = (struct ash_tuple *) obj;
+        return length(tuple);
+    }
+    return 0;
 }
