@@ -113,43 +113,44 @@ static void ash_echo_format(const char *fmt)
 
 int ash_echo(int argc, const char * const *argv)
 {
+    if (argc == 1)
+        return ASH_STATUS_OK;
+
     int start = 1;
     ash_flag options = ASH_FLAG_RESET;
 
-    if (argc > 1) {
-        const char *opt;
-        for (int i = 1; i < argc; ++i) {
-            opt = argv[i];
+    const char *opt;
+    for (int i = 1; i < argc; ++i) {
+        opt = argv[i];
 
-            if (opt[0] == '-') {
-                int n;
-                if ((n = ash_echo_option(&opt[1]))) {
-                    options |= n;
-                    start++;
-                }
-            } else
-                break;
-        }
-
-        const char *fmt = options & SPACE ? "%s": "%s ";
-
-        if (start < argc) {
-
-            if (options & FORMAT) {
-                for (; start < argc -1; ++start) {
-                    ash_echo_format(argv[start]);
-                    if (!(options & SPACE))
-                        ash_putchar(' ');
-                }
-                ash_echo_format(argv[argc - 1]);
-
-            } else {
-                for (; start < argc -1; ++start)
-                    ash_print(fmt, argv[start]);
-                ash_print(argv[argc - 1]);
+        if (opt[0] == '-') {
+            int n;
+            if ((n = ash_echo_option(&opt[1]))) {
+                options |= n;
+                start++;
             }
-        }
+        } else
+            break;
+    }
 
+    const char *fmt;
+    fmt = options & SPACE ? "%s": "%s ";
+
+    if (start < argc) {
+
+        if (options & FORMAT) {
+            for (; start < argc -1; ++start) {
+                ash_echo_format(argv[start]);
+                if (!(options & SPACE))
+                    ash_putchar(' ');
+            }
+            ash_echo_format(argv[argc - 1]);
+
+        } else {
+            for (; start < argc -1; ++start)
+                ash_print(fmt, argv[start]);
+            ash_print("%s", argv[argc - 1]);
+        }
     }
 
     if (!(options & LINE))
