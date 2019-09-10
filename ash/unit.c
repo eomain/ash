@@ -22,13 +22,15 @@
 #include "ash/signal.h"
 #include "ash/unit.h"
 #include "ash/var.h"
+#include "ash/ffi/ffi.h"
 
 static const struct ash_unit_module * const unit[] = {
     &ash_module_var,
     &ash_module_env,
     &ash_module_io,
     &ash_module_signal,
-    &ash_module_exec
+    &ash_module_exec,
+    &ash_module_ffi
 };
 
 void ash_unit_init(void)

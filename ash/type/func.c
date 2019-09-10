@@ -14,6 +14,7 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <assert.h>
 #include <stddef.h>
 
 #include "ash/func.h"
@@ -23,6 +24,7 @@
 #include "ash/ops.h"
 #include "ash/str.h"
 #include "ash/var.h"
+#include "ash/ffi/ffi.h"
 #include "ash/lang/ast.h"
 #include "ash/lang/runtime.h"
 
@@ -35,6 +37,7 @@ struct ash_func {
     struct ast_prog prog;
     const char *name;
     struct ast_param *param;
+    ash_ffi ffi;
 };
 
 static void dealloc(struct ash_obj *obj)
@@ -96,6 +99,7 @@ struct ash_obj *ash_func_new(void)
     func = ash_zalloc(sizeof *func);
     func->name = NULL;
     func->param = NULL;
+    func->ffi = NULL;
 
     struct ash_obj *obj;
     obj = (struct ash_obj *) func;
@@ -124,6 +128,20 @@ struct ash_obj *ash_func_from(const char *name, struct ast_prog prog,
     return obj;
 }
 
+struct ash_obj *
+ash_func_from_ffi(const char *name, ash_ffi ffi)
+{
+    struct ash_obj *obj;
+    obj = ash_func_new();
+
+    struct ash_func *func;
+    func = (struct ash_func *) obj;
+    func->name = name;
+    func->ffi = ffi;
+
+    return obj;
+}
+
 static void ash_func_set_args(struct ash_env *env, struct ash_obj *args,
                               struct ast_param *param)
 {
@@ -141,6 +159,35 @@ static void ash_func_set_args(struct ash_env *env, struct ash_obj *args,
     }
 }
 
+static inline
+struct ash_obj *
+ash_func_exce_native(struct ash_func *func, struct ash_runtime_env *renv,
+                     struct ash_obj *args)
+{
+    struct ash_runtime_prog prog;
+    struct ash_runtime_env nenv;
+    struct ash_obj *ret;
+    struct ash_env *env;
+    env = ash_env_new_from(renv->module, renv->env);
+
+    if (args)
+        ash_func_set_args(env, args, func->param);
+
+    runtime_env_init(&nenv, renv->module, env);
+    runtime_prog_init(&prog, func->prog, nenv);
+    ret = runtime_exec_func(&prog);
+    ash_env_destroy(env);
+    return ret;
+}
+
+static inline
+struct ash_obj *
+ash_func_exec_ffi(struct ash_func *func, struct ash_obj *args)
+{
+    assert(func->ffi);
+    return func->ffi(args);
+}
+
 struct ash_obj *
 ash_func_exec(struct ash_obj *obj, struct ash_runtime_env *renv,
               struct ash_obj *args)
@@ -149,20 +196,10 @@ ash_func_exec(struct ash_obj *obj, struct ash_runtime_env *renv,
         struct ash_func *func;
         func = (struct ash_func *) obj;
 
-        struct ash_runtime_prog prog;
-        struct ash_runtime_env nenv;
-        struct ash_obj *ret;
-        struct ash_env *env;
-        env = ash_env_new_from(renv->module, renv->env);
-
-        if (args)
-            ash_func_set_args(env, args, func->param);
-
-        runtime_env_init(&nenv, renv->module, env);
-        runtime_prog_init(&prog, func->prog, nenv);
-        ret = runtime_exec_func(&prog);
-        ash_env_destroy(env);
-        return ret;
+        if (func->ffi)
+            return ash_func_exec_ffi(func, args);
+        else
+            return ash_func_exce_native(func, renv, args);
     }
 
     return NULL;

@@ -14,24 +14,14 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_FUNC_H
-#define ASH_FUNC_H
-
-#include <stddef.h>
+#ifndef ASH_FFI_FFI_H
+#define ASH_FFI_FFI_H
 
 #include "ash/obj.h"
-#include "ash/ffi/ffi.h"
-#include "ash/lang/ast.h"
-#include "ash/lang/runtime.h"
+#include "ash/unit.h"
 
-extern struct ash_obj *ash_func_new(void);
-extern struct ash_obj *ash_func_exec(struct ash_obj *, struct ash_runtime_env *,
-                                     struct ash_obj *);
-extern void ash_func_set(struct ash_obj *, const char *, struct ast_prog,
-                         struct ast_param *);
-extern struct ash_obj *ash_func_from(const char *, struct ast_prog,
-                                     struct ast_param *);
+extern const struct ash_unit_module ash_module_ffi;
 
-extern struct ash_obj *ash_func_from_ffi(const char *, ash_ffi);
+typedef struct ash_obj *(*ash_ffi)(struct ash_obj *);
 
 #endif
