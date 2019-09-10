@@ -21,7 +21,7 @@
 
 const char *ash_unset_usage(void)
 {
-    return "unset variable or function";
+    return "unset variable";
 }
 
 int ash_unset_env(int argc, const char * const *argv,
