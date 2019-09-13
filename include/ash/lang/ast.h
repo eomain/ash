@@ -20,6 +20,7 @@
 #include "ash/bool.h"
 #include "ash/exec.h"
 #include "ash/int.h"
+#include "ash/module.h"
 #include "ash/obj.h"
 #include "ash/var.h"
 #include "ash/lang/lang.h"

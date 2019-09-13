@@ -17,6 +17,7 @@
 #ifndef ASH_LANG_RUNTIME_H
 #define ASH_LANG_RUNTIME_H
 
+#include "ash/module.h"
 #include "ash/obj.h"
 #include "ash/var.h"
 #include "ash/lang/ast.h"
@@ -80,7 +81,7 @@ runtime_set_var(struct ash_runtime_env *renv, const char *id, struct ash_obj *ob
     }
 
     mod = renv->module;
-    return ash_module_set(mod, id, obj);
+    return ash_module_var_set(mod, id, obj);
 }
 
 static inline struct ash_var *
@@ -96,7 +97,7 @@ runtime_get_var(struct ash_runtime_env *renv, const char *id)
     }
 
     mod = renv->module;
-    return ash_module_get(mod, id);
+    return ash_module_var_get(mod, id);
 }
 
 static inline void
@@ -113,8 +114,8 @@ runtime_unset_var(struct ash_runtime_env *renv, const char *id)
 
     if (!av) {
         mod = renv->module;
-        if ((av = ash_module_get(mod, id)))
-            ash_module_unset(mod, av);
+        if ((av = ash_module_var_get(mod, id)))
+            ash_module_var_unset(mod, av);
     }
 }
 

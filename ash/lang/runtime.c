@@ -23,6 +23,7 @@
 #include "ash/iter.h"
 #include "ash/macro.h"
 #include "ash/mem.h"
+#include "ash/module.h"
 #include "ash/obj.h"
 #include "ash/ops.h"
 #include "ash/range.h"
@@ -218,7 +219,7 @@ runtime_var_set(struct ash_runtime_context *context, const char *id,
 
     struct ash_module *mod;
     mod = runtime_context_module(context);
-    return ash_module_set(mod, id, obj);
+    return ash_module_var_set(mod, id, obj);
 }
 
 static inline struct ash_var *
@@ -293,8 +294,8 @@ runtime_eval_var(struct ash_runtime_context *context, struct ast_var *av)
         var = ash_var_env_get(env, id);
 
     if (!var && module) {
-        if (!(var = ash_module_get(module, id)))
-            var = ash_module_get(ash_module_root(), id);
+        if (!(var = ash_module_var_get(module, id)))
+            var = ash_module_var_get(ash_module_root(), id);
     }
 
     if (var)
@@ -766,10 +767,10 @@ runtime_assign(struct ash_runtime_context *context, struct ast_assign *assign)
         } while ((env = ash_env_parent(env)));
     }
 
-    if ((av = ash_module_get(module, id)))
+    if ((av = ash_module_var_get(module, id)))
         ash_var_bind(av, obj);
     else
-        ash_module_set(module, id, obj);
+        ash_module_var_set(module, id, obj);
 }
 
 static void
@@ -1000,7 +1001,7 @@ static void runtime_module(struct ash_runtime_context *context,
     name = module->name;
     stm = module->stm;
 
-    if ((mod = ash_sub_module_set(pmod, name))) {
+    if ((mod = ash_module_sub_set(pmod, name))) {
         ast_prog_init(&prog, stm);
         runtime_env_init(&env, mod, NULL);
         runtime_prog_init(&rprog, prog, env);
