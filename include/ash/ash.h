@@ -25,8 +25,8 @@
 
 /* current shell version */
 #define ASH_VERSION_MAJOR "0"
-#define ASH_VERSION_MINOR "1"
-#define ASH_VERSION_MICRO "9"
+#define ASH_VERSION_MINOR "2"
+#define ASH_VERSION_MICRO "0"
 
 #define ASH_VERSION ASH_VERSION_MAJOR "." \
                     ASH_VERSION_MINOR "." \
