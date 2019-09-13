@@ -142,7 +142,7 @@ hash_map_remove(struct hashmap *hashmap, hash_t hash, key_t *key,
 
     if (limit == 0)
         hashmap->entries[hash] = NULL;
-    else if (e && e->next && p)
+    else if (e && p)
         p->next = e->next;
     return e;
 }
