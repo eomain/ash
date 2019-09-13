@@ -49,6 +49,7 @@ ash_command_env_get_result(struct ash_command_env *env)
 /* All ash built-in commands */
 enum ash_command_name {
     ASH_ERR_COMMAND = -1,
+    ASH_COMMAND_ALIAS,
     ASH_COMMAND_ASSERT,
     ASH_COMMAND_BUILTIN,
     ASH_COMMAND_CD,

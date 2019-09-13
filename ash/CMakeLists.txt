@@ -7,6 +7,11 @@ set(
 )
 
 set(
+	SRC_UTIL
+	"util/map.c" "util/hash.c"
+)
+
+set(
 	SRC_TYPE
 	"type/obj.c" "type/int.c" "type/bool.c"
 	"type/str.c" "type/range.c" "type/func.c"
@@ -30,7 +35,9 @@ add_executable("ash" ash.c io.c env.c var.c builtin.c
 	   read.c exit.c export.c typeof.c
 	   iter.c defined.c command.c rand.c util.c
 	   signal.c help.c session.c unit.c history.c
-	   ${SRC_LANG} ${SRC_TYPE} ${SRC_TERM} ${SRC_FFI})
+	   alias.c module.c
+	   ${SRC_LANG} ${SRC_TYPE} ${SRC_TERM} ${SRC_FFI}
+	   ${SRC_UTIL})
 
 target_compile_options("ash" PRIVATE "-Wreturn-type" "-g")
 

@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ash/alias.h"
 #include "ash/ash.h"
 #include "ash/builtin.h"
 #include "ash/command.h"
@@ -53,6 +54,13 @@ struct ash_command {
 };
 
 static struct ash_command commands[ ASH_COMMAND_NO ] = {
+
+    [ ASH_COMMAND_ALIAS ] = {
+        .command = ASH_COMMAND_ALIAS,
+        .name    = "alias",
+        .main    = ash_alias,
+        .usage   = ash_alias_usage
+    },
 
     [ ASH_COMMAND_ASSERT ] = {
         .command = ASH_COMMAND_ASSERT,
@@ -205,6 +213,15 @@ void ash_command_usage(enum ash_command_name command)
 enum ash_command_name ash_command_find(const char *v)
 {
     switch (v[0]) {
+        case 'a':
+            if (v[1] == 'l' &&
+                v[2] == 'i' &&
+                v[3] == 'a' &&
+                v[4] == 's' &&
+                !v[5])
+                return ASH_COMMAND_ALIAS;
+            break;
+
         case 'b':
             if (v[1] == 'u' &&
                 v[2] == 'i' &&

@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ash/alias.h"
 #include "ash/ash.h"
 #include "ash/command.h"
 #include "ash/env.h"
@@ -153,7 +154,7 @@ ash_exec_child(int input, int output,
         if (execvp(prog, argv) == -1) {
             const char *msg = (errno == ENOENT) ?
                 "Unrecognized command": strerror(errno);
-            ash_print_err_command(argv[0], msg);
+            ash_print_err_command(prog, msg);
         }
         _exit(0);
     }
@@ -274,19 +275,29 @@ int ash_exec_command(int argc, const char **argv, struct ash_runtime_env *renv)
     assert(*argv[0]);
 
     int status;
+    const char *name, *alias;
     enum ash_command_name command;
     struct ash_command_env env;
     ash_command_env_init(&env, renv);
 
-    command = ash_command_find(argv[0]);
+    name = argv[0];
+    if ((alias = ash_alias_get(name))) {
+        name = alias;
+        alias = argv[0];
+        argv[0] = name;
+    }
+    command = ash_command_find(name);
 
     if (ash_command_valid(command)) {
         status = ash_command_exec(command, argc, argv, &env);
         ash_exec_command_status(status, &env);
     } else {
         status = ash_exec_child(ASH_STDIN, ASH_STDOUT,
-                                argv[0], (char *const*)argv);
+                                name, (char *const*)argv);
     }
+
+    if (alias)
+        argv[0] = alias;
 
     return status;
 }

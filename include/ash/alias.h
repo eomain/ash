@@ -14,35 +14,18 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stddef.h>
+#ifndef ASH_ALIAS_H
+#define ASH_ALIAS_H
 
-#include "ash/alias.h"
-#include "ash/env.h"
-#include "ash/exec.h"
-#include "ash/io.h"
-#include "ash/module.h"
-#include "ash/signal.h"
 #include "ash/unit.h"
-#include "ash/ffi/ffi.h"
 
-static const struct ash_unit_module * const unit[] = {
-    &ash_module_module,
-    &ash_module_env,
-    &ash_module_io,
-    &ash_module_signal,
-    &ash_module_alias,
-    &ash_module_exec,
-    &ash_module_ffi,
-};
+extern const struct ash_unit_module ash_module_alias;
 
-void ash_unit_init(void)
-{
-    for (size_t i = 0; i < array_length(unit); i++)
-        ash_unit_module_init(unit[i]);
-}
+extern const char *ash_alias_usage(void);
+extern int ash_alias(int, const char * const *);
 
-void ash_unit_destroy(void)
-{
-    for (size_t i = 0; i < array_length(unit); i++)
-        ash_unit_module_destory(unit[i]);
-}
+extern const char *ash_alias_get(const char *);
+extern void ash_alias_set(const char *, const char *);
+extern void ash_alias_unset(const char *);
+
+#endif
