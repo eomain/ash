@@ -162,6 +162,15 @@ struct ast_literal *ast_literal_str(const char *value)
     return literal;
 }
 
+struct ast_literal *ast_literal_array(struct ast_composite *value)
+{
+    struct ast_literal *literal;
+    literal = ash_literal_new();
+    literal->type = AST_LITERAL_ARRAY;
+    literal->value.array = value;
+    return literal;
+}
+
 struct ast_literal *ast_literal_tuple(struct ast_composite *value)
 {
     struct ast_literal *literal;

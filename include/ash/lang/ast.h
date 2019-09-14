@@ -79,6 +79,7 @@ struct ast_literal {
         AST_LITERAL_BOOL,
         AST_LITERAL_NUM,
         AST_LITERAL_STR,
+        AST_LITERAL_ARRAY,
         AST_LITERAL_TUPLE,
         AST_LITERAL_RANGE,
         AST_LITERAL_MAP,
@@ -89,6 +90,7 @@ struct ast_literal {
         bool boolean;
         isize numeric;
         const char *string;
+        struct ast_composite *array;
         struct ast_composite *tuple;
         struct ast_range *range;
         struct ast_map *map;
@@ -99,6 +101,7 @@ struct ast_literal {
 extern struct ast_literal *ast_literal_bool(bool);
 extern struct ast_literal *ast_literal_num(isize);
 extern struct ast_literal *ast_literal_str(const char *);
+extern struct ast_literal *ast_literal_array(struct ast_composite *);
 extern struct ast_literal *ast_literal_tuple(struct ast_composite *);
 extern struct ast_literal *ast_literal_range(struct ast_range *);
 extern struct ast_literal *ast_literal_map(struct ast_map *);
