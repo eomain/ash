@@ -14,6 +14,7 @@ set(
 set(
 	SRC_UTIL
 	"util/map.c" "util/hash.c" "util/vec.c"
+	"util/strbuf.c"
 )
 
 set(
@@ -38,7 +39,7 @@ add_executable("ash" ash.c io.c env.c var.c builtin.c
 	   mem.c script.c exec.c echo.c
 	   cd.c sleep.c unset.c ops.c source.c
 	   read.c exit.c export.c typeof.c
-	   iter.c defined.c command.c rand.c util.c
+	   iter.c defined.c command.c rand.c
 	   signal.c help.c session.c unit.c history.c
 	   alias.c module.c
 	   ${SRC_LANG} ${SRC_TYPE} ${SRC_TERM} ${SRC_FFI}
