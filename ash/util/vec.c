@@ -71,6 +71,16 @@ void **vec_get_ref(struct vec *vec)
     return vec->data;
 }
 
+void *vec_set(struct vec *vec, size_t index, void *v)
+{
+    void *n = NULL;
+    if (index < vec->length) {
+        n = vec->data[index];
+        vec->data[index] = v;
+    }
+    return n;
+}
+
 void *vec_pop(struct vec *vec)
 {
     size_t index;
