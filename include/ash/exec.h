@@ -22,6 +22,7 @@
 #include "ash/type.h"
 #include "ash/unit.h"
 #include "ash/var.h"
+#include "ash/util/vec.h"
 
 #define ASH_SYMBOL_EXIT "__EXIT__"
 #define ASH_SYMBOL_RESULT "__RESULT__"
@@ -53,7 +54,7 @@ extern int ash_exec(int, const char * const *);
 
 struct ash_runtime_env;
 
-extern int ash_exec_command(int, const char **, struct ash_runtime_env *);
+extern int ash_exec_command(struct vec *, struct ash_runtime_env *);
 extern int ash_exec_set_path(void);
 
 #endif

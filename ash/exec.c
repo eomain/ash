@@ -269,35 +269,36 @@ void ash_exec_command_status(int status, struct ash_command_env *cenv)
     ash_exec_env_exit(&env, status);
 }
 
-int ash_exec_command(int argc, const char **argv, struct ash_runtime_env *renv)
+int ash_exec_command(struct vec *vec, struct ash_runtime_env *renv)
 {
-    assert(argv[0]);
-    assert(*argv[0]);
-
-    int status;
+    int argc, status;
     const char *name, *alias;
+    const char **argv;
     enum ash_command_name command;
     struct ash_command_env env;
     ash_command_env_init(&env, renv);
 
-    name = argv[0];
+    name = vec_get(vec, 0);
     if ((alias = ash_alias_get(name))) {
         name = alias;
-        alias = argv[0];
-        argv[0] = name;
+        alias = vec_set(vec, 0, (char *)name);
     }
     command = ash_command_find(name);
+
+    argc = vec_len(vec);
+    argv = (const char **) vec_get_ref(vec);
 
     if (ash_command_valid(command)) {
         status = ash_command_exec(command, argc, argv, &env);
         ash_exec_command_status(status, &env);
     } else {
+        vec_push(vec, NULL);
         status = ash_exec_child(ASH_STDIN, ASH_STDOUT,
                                 name, (char *const*)argv);
     }
 
     if (alias)
-        argv[0] = alias;
+        vec_set(vec, 0, (char *)alias);
 
     return status;
 }
