@@ -285,14 +285,14 @@ int ash_exec_command(struct vec *vec, struct ash_runtime_env *renv)
     }
     command = ash_command_find(name);
 
-    argc = vec_len(vec);
-    argv = (const char **) vec_get_ref(vec);
-
     if (ash_command_valid(command)) {
+        argc = vec_len(vec);
+        argv = (const char **) vec_get_ref(vec);
         status = ash_command_exec(command, argc, argv, &env);
         ash_exec_command_status(status, &env);
     } else {
         vec_push(vec, NULL);
+        argv = (const char **) vec_get_ref(vec);
         status = ash_exec_child(ASH_STDIN, ASH_STDOUT,
                                 name, (char *const*)argv);
     }

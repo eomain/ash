@@ -844,34 +844,31 @@ runtime_command(struct ash_runtime_context *context, struct ast_command *command
     struct ash_env *env;
     struct ash_obj *obj;
     struct ast_expr *expr;
-    size_t argc;
-    const char **argv;
 
     expr = command->expr;
     mod = runtime_context_module(context);
     env = runtime_context_env(context);
     runtime_env_init(&renv, mod, env);
 
-    const char *s;
-    struct vec *vec;
-    vec = vec_from(command->length);
+    struct vec *objs;
+    objs = vec_from(command->length);
 
     do {
         if ((obj = runtime_eval_expr(context, expr))) {
-            if ((obj = ash_obj_str(obj))) {
-                if ((s = ash_str_get(obj)))
-                    vec_push(vec, (char *)s);
-            }
+            if ((obj = ash_obj_str(obj)))
+                vec_push(objs, obj);
         }
     } while ((expr = expr->next));
 
-    argc = vec_len(vec);
-    argv = (const char **) vec_get_ref(vec);
+    if (vec_len(objs) > 0) {
+        struct vec *vec;
+        vec = vec_map(objs, (void *(*)(void *))ash_str_get);
+        if (vec_len(vec) > 0)
+            ash_exec_command(vec, &renv);
+        vec_destroy(vec);
+    }
 
-    if (argc > 0)
-        ash_exec_command(argc, argv, &renv);
-
-    vec_destroy(vec);
+    vec_destroy(objs);
 }
 
 static struct ash_obj *
