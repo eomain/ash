@@ -50,6 +50,14 @@ void vec_destroy(struct vec *vec)
     ash_free(vec);
 }
 
+void vec_append(struct vec *vec, struct vec *v)
+{
+    size_t len = vec_len(v);
+
+    for (size_t i = 0; i < len; ++i)
+        vec_push(vec, vec_get(v, i));
+}
+
 void *vec_get(struct vec *vec, size_t index)
 {
     void *v = NULL;
@@ -99,4 +107,12 @@ void vec_push(struct vec *vec, void *v)
 size_t vec_len(struct vec *vec)
 {
     return vec->length;
+}
+
+void vec_for_each(struct vec *vec, void (*func)(void *))
+{
+    size_t len = vec_len(vec);
+
+    for (size_t i = 0; i < len; ++i)
+        func(vec->data[i]);
 }
