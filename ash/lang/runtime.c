@@ -34,6 +34,8 @@
 #include "ash/lang/ast.h"
 #include "ash/lang/parser.h"
 #include "ash/lang/runtime.h"
+#include "ash/type/map.h"
+#include "ash/util/vec.h"
 
 struct ash_runtime_context;
 
@@ -384,6 +386,25 @@ runtime_eval_range(struct ash_runtime_context *context,
 }
 
 static struct ash_obj *
+runtime_eval_map(struct ash_runtime_context *context,
+                 struct ast_map *map)
+{
+    struct ash_obj *obj, *value;
+    struct ast_entry *entry;
+
+    obj = ash_map_new();
+    entry = map->entry;
+
+    while (entry) {
+        if ((value = runtime_eval_expr(context, entry->expr)))
+            ash_map_insert(obj, entry->key, value);
+        entry = entry->next;
+    }
+
+    return obj;
+}
+
+static struct ash_obj *
 runtime_eval_string(struct ash_runtime_context *context,
                     const char *str)
 {
@@ -413,6 +434,8 @@ runtime_eval_literal(struct ash_runtime_context *context,
         return runtime_eval_tuple(context, literal->value.tuple);
     else if (type == AST_LITERAL_RANGE)
         return runtime_eval_range(context, literal->value.range);
+    else if (type == AST_LITERAL_MAP)
+        return runtime_eval_map(context, literal->value.map);
     else if (type == AST_LITERAL_CLOSURE)
         return runtime_eval_closure(literal->value.closure);
     else
@@ -684,6 +707,15 @@ runtime_eval_match(struct ash_runtime_context *context, struct ast_match *match)
 }
 
 static struct ash_obj *
+runtime_eval_hash(struct ash_runtime_context *context, struct ast_hash *hash)
+{
+    struct ash_obj *obj = NULL, *map;
+    if ((map = runtime_eval_expr(context, hash->expr)))
+        obj = ash_map_get(map, hash->key);
+    return obj;
+}
+
+static struct ash_obj *
 runtime_eval_expr(struct ash_runtime_context *context, struct ast_expr *expr)
 {
     enum ast_expr_type type;
@@ -706,6 +738,8 @@ runtime_eval_expr(struct ash_runtime_context *context, struct ast_expr *expr)
         obj = runtime_eval_ternary(context, expr->expr);
     else if (type == AST_EXPR_MATCH)
         obj = runtime_eval_match(context, expr->expr);
+    else if (type == AST_EXPR_HASH)
+        obj = runtime_eval_hash(context, expr->expr);
 
     return obj;
 }
@@ -781,34 +815,38 @@ runtime_command(struct ash_runtime_context *context, struct ast_command *command
     struct ash_env *env;
     struct ash_obj *obj;
     struct ast_expr *expr;
-    size_t argc = command->length;
-    size_t size = argc + 1;
-    expr = command->expr;
+    size_t argc;
+    const char **argv;
 
-    size_t pos = 0;
-    struct ash_obj *objs[size];
-    const char *argv[size];
-    memset(objs, 0, size * sizeof *objs);
-    memset(argv, 0, size * sizeof *argv);
+    expr = command->expr;
     mod = runtime_context_module(context);
     env = runtime_context_env(context);
     runtime_env_init(&renv, mod, env);
 
+    const char *s;
+    struct vec *vec;
+    vec = vec_new();
+
     do {
-        obj = runtime_eval_expr(context, expr);
-        objs[pos] = ash_obj_str(obj);
-        if (objs[pos]) {
-            argv[pos] = ash_str_get(objs[pos]);
-            pos++;
-        } else if (argc > 0) {
-            argc--;
+        if ((obj = runtime_eval_expr(context, expr))) {
+            if ((obj = ash_obj_str(obj))) {
+                if ((s = ash_str_get(obj)))
+                    vec_push(vec, (char *)s);
+            }
         }
     } while ((expr = expr->next));
+
+    argc = vec_len(vec);
+    argv = (const char **) vec_get_ref(vec);
 
     if (argc > 0)
         ash_exec_command(argc, argv, &renv);
 
-    /*ash_obj_set_dec_rc(objs);*/
+    /*while ((s = vec_pop(vec))) {
+
+    }*/
+
+    vec_destroy(vec);
 }
 
 static struct ash_obj *
