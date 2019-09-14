@@ -31,6 +31,7 @@
 #include "ash/type.h"
 #include "ash/var.h"
 #include "ash/lang/main.h"
+#include "ash/util/vec.h"
 
 /* print the current ash version */
 static void ash_print_version(void)
@@ -172,15 +173,17 @@ static inline size_t ash_option_count(struct ash_option *opt)
 struct ash_var *ash_option_args(struct ash_option *opt, int argc)
 {
     struct ash_obj *argv = NULL;
-    struct ash_obj *objs[argc];
-    memset(objs, 0, argc * sizeof (struct ash_obj *));
+    struct ash_obj **objs;
+    struct vec *vec;
+    vec = vec_new();
 
     const char *args;
     for (size_t i = 0; i < argc; ++i) {
         args = ash_strcpy(ash_option_get(opt));
-        objs[i] = ash_str_from(args);
+        vec_push(vec, ash_str_from(args));
     }
 
+    objs = (struct ash_obj **) vec_get_ref(vec);
     argv = ash_tuple_from(argc, objs);
 
     return ash_var_set("@", argv);
