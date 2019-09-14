@@ -31,5 +31,6 @@ extern void *vec_pop(struct vec *);
 extern void vec_push(struct vec *, void *);
 extern size_t vec_len(struct vec *);
 extern void vec_for_each(struct vec *, void (*)(void *));
+extern struct vec *vec_map(struct vec *, void *(*)(void *));
 
 #endif

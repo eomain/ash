@@ -116,3 +116,17 @@ void vec_for_each(struct vec *vec, void (*func)(void *))
     for (size_t i = 0; i < len; ++i)
         func(vec->data[i]);
 }
+
+struct vec *vec_map(struct vec *vec, void *(*func)(void *))
+{
+    size_t len;
+    struct vec *v;
+
+    len = vec_len(vec);
+    v = vec_from(len);
+
+    for (size_t i = 0; i < len; ++i)
+        vec_push(v, func(vec->data[i]));
+
+    return v;
+}
