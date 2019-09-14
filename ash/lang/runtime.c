@@ -34,6 +34,7 @@
 #include "ash/lang/ast.h"
 #include "ash/lang/parser.h"
 #include "ash/lang/runtime.h"
+#include "ash/type/array.h"
 #include "ash/type/map.h"
 #include "ash/util/vec.h"
 
@@ -352,6 +353,32 @@ static struct ash_obj *runtime_eval_closure(struct ast_function *function)
 }
 
 static struct ash_obj *
+runtime_eval_array(struct ash_runtime_context *context,
+                   struct ast_composite *comp)
+{
+    if (!comp)
+        return NULL;
+
+    struct vec *vec;
+    size_t argc = comp->length;
+    struct ash_obj *obj = NULL;
+
+    if (argc > 0) {
+        struct ast_expr *expr = comp->expr;
+        vec = vec_new();
+
+        for (size_t i = 0; i < argc; ++i) {
+            vec_push(vec, runtime_eval_expr(context, expr));
+            expr = expr->next;
+        }
+
+        obj = ash_array_from(vec);
+    }
+
+    return obj;
+}
+
+static struct ash_obj *
 runtime_eval_tuple(struct ash_runtime_context *context,
                    struct ast_composite *tuple)
 {
@@ -430,6 +457,8 @@ runtime_eval_literal(struct ash_runtime_context *context,
         return ash_int_from(literal->value.numeric);
     else if (type == AST_LITERAL_STR)
         return runtime_eval_string(context, literal->value.string);
+    else if (type == AST_LITERAL_ARRAY)
+        return runtime_eval_array(context, literal->value.array);
     else if (type == AST_LITERAL_TUPLE)
         return runtime_eval_tuple(context, literal->value.tuple);
     else if (type == AST_LITERAL_RANGE)

@@ -302,6 +302,18 @@ static isize parser_value_num(struct parser *p)
     }
 }
 
+static struct ast_composite *parser_array(struct parser *p)
+{
+    struct ast_composite *array = NULL;
+    parser_assert(p, LS_TK);
+
+    if (parser_get_next_type(p) != RS_TK)
+        array = parser_args(p);
+    parser_assert(p, RS_TK);
+
+    return array;
+}
+
 static struct ast_composite *parser_tuple(struct parser *p)
 {
     struct ast_composite *tuple = NULL;
@@ -477,6 +489,10 @@ static struct ast_literal *parser_literal(struct parser *p)
         case VAR_TK:
         case DQT_TK:
             literal = ast_literal_str(parser_get_str(p));
+            break;
+
+        case LS_TK:
+            literal = ast_literal_array(parser_array(p));
             break;
 
         case LP_TK:
