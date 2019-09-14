@@ -186,6 +186,8 @@ struct ash_var *ash_option_args(struct ash_option *opt, int argc)
     objs = (struct ash_obj **) vec_get_ref(vec);
     argv = ash_tuple_from(argc, objs);
 
+    vec_destroy(vec);
+
     return ash_var_set("@", argv);
 }
 
