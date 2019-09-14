@@ -2,13 +2,18 @@
 find_library(LIBEDIT edit)
 
 set(
+	SRC_FS
+	"fs/io.c"
+)
+
+set(
 	SRC_FFI
 	"ffi/ffi.c"
 )
 
 set(
 	SRC_UTIL
-	"util/map.c" "util/hash.c"
+	"util/map.c" "util/hash.c" "util/vec.c"
 )
 
 set(
