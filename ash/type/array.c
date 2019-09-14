@@ -76,6 +76,7 @@ static void dealloc(struct ash_obj *obj)
     vec = array->vec;
 
     vec_for_each(vec, (void (*)(void *))ash_obj_dec_rc);
+    vec_destroy(vec);
 }
 
 static struct ash_base base = {
