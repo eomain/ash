@@ -73,7 +73,6 @@ static struct option iter(struct ash_obj *value, size_t pos)
 {
     struct option opt;
     struct ash_tuple *tuple;
-    struct ash_obj *obj;
     tuple = (struct ash_tuple *) value;
 
     if (pos < length(tuple))
