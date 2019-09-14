@@ -24,7 +24,6 @@
 #include "ash/ops.h"
 #include "ash/str.h"
 #include "ash/type.h"
-#include "ash/util.h"
 #include "ash/var.h"
 
 #define ASH_STR_TYPENAME "string"

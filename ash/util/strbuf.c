@@ -16,7 +16,7 @@
 
 #include "ash/mem.h"
 #include "ash/ops.h"
-#include "ash/util.h"
+#include "ash/util/strbuf.h"
 
 void strbuf_init(struct strbuf *buf, size_t size)
 {

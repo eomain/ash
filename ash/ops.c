@@ -24,9 +24,9 @@
 #include "ash/mem.h"
 #include "ash/str.h"
 #include "ash/type.h"
-#include "ash/util.h"
 #include "ash/var.h"
 #include "ash/lang/runtime.h"
+#include "ash/util/strbuf.h"
 
 static const char *format_check(const char *fmt)
 {
