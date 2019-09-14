@@ -62,6 +62,8 @@ static enum ash_tk_type lex_token_type(char c)
         case ']':   return RS_TK;
         case '(':   return LP_TK;
         case ')':   return RP_TK;
+        case '{':   return LB_TK;
+        case '}':   return RB_TK;
 
         case '<':   return LN_TK;
         case '>':   return GN_TK;

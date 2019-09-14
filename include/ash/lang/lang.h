@@ -136,6 +136,10 @@ enum ash_tk_type {
     LP_TK,
     /* right paren */
     RP_TK,
+    /* left brace */
+    LB_TK,
+    /* right brace */
+    RB_TK,
     /* backquote */
     BQ_TK,
     /* true */
