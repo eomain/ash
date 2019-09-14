@@ -60,6 +60,20 @@ struct ast_range {
 
 extern struct ast_range* ast_range_new(isize, isize, bool);
 
+struct ast_entry {
+    const char *key;
+    struct ast_expr *expr;
+    struct ast_entry *next;
+};
+
+extern struct ast_entry *ast_entry_new(const char *, struct ast_expr *);
+
+struct ast_map {
+    struct ast_entry *entry;
+};
+
+extern struct ast_map *ast_map_new(struct ast_entry *);
+
 struct ast_literal {
     enum ast_literal_type {
         AST_LITERAL_BOOL,
@@ -67,6 +81,7 @@ struct ast_literal {
         AST_LITERAL_STR,
         AST_LITERAL_TUPLE,
         AST_LITERAL_RANGE,
+        AST_LITERAL_MAP,
         AST_LITERAL_CLOSURE
     } type;
 
@@ -76,6 +91,7 @@ struct ast_literal {
         const char *string;
         struct ast_composite *tuple;
         struct ast_range *range;
+        struct ast_map *map;
         struct ast_function *closure;
     } value;
 };
@@ -85,6 +101,7 @@ extern struct ast_literal *ast_literal_num(isize);
 extern struct ast_literal *ast_literal_str(const char *);
 extern struct ast_literal *ast_literal_tuple(struct ast_composite *);
 extern struct ast_literal *ast_literal_range(struct ast_range *);
+extern struct ast_literal *ast_literal_map(struct ast_map *);
 extern struct ast_literal *ast_literal_closure(struct ast_function *);
 
 struct ast_value {
@@ -203,6 +220,14 @@ struct ast_match {
 extern struct ast_match *
 ast_match_new(struct ast_expr *, struct ast_case *, struct ast_expr *);
 
+struct ast_hash {
+    const char *key;
+    struct ast_expr *expr;
+};
+
+extern struct ast_hash *
+ast_hash_new(const char *, struct ast_expr *);
+
 struct ast_expr {
     enum ast_expr_type {
         AST_EXPR_VALUE,
@@ -213,6 +238,7 @@ struct ast_expr {
         AST_EXPR_LOGICAL,
         AST_EXPR_TERNARY,
         AST_EXPR_MATCH,
+        AST_EXPR_HASH,
     } type;
 
     void *expr;

@@ -95,6 +95,41 @@ void ast_range_destroy(struct ast_range *range)
     ash_free(range);
 }
 
+struct ast_entry *ast_entry_new(const char *key, struct ast_expr *expr)
+{
+    struct ast_entry *entry;
+    entry = ash_alloc(sizeof *entry);
+    entry->key = key;
+    entry->expr = expr;
+    return entry;
+}
+
+void ast_entry_destroy(struct ast_entry *entry)
+{
+    if (entry->key)
+        ash_free((char *)entry->key);
+    if (entry->expr)
+        ast_expr_destroy(entry->expr);
+    if (entry->next)
+        ast_entry_destroy(entry->next);
+    ash_free(entry);
+}
+
+struct ast_map *ast_map_new(struct ast_entry *entry)
+{
+    struct ast_map *map;
+    map = ash_alloc(sizeof *map);
+    map->entry = entry;
+    return map;
+}
+
+void ast_map_destroy(struct ast_map *map)
+{
+    if (map->entry)
+        ast_entry_destroy(map->entry);
+    ash_free(map);
+}
+
 static inline struct ast_literal *ash_literal_new(void)
 {
     return ash_zalloc(sizeof (struct ast_literal));
@@ -142,6 +177,15 @@ struct ast_literal *ast_literal_range(struct ast_range *value)
     literal = ash_literal_new();
     literal->type = AST_LITERAL_RANGE;
     literal->value.range = value;
+    return literal;
+}
+
+struct ast_literal *ast_literal_map(struct ast_map *value)
+{
+    struct ast_literal *literal;
+    literal = ash_literal_new();
+    literal->type = AST_LITERAL_MAP;
+    literal->value.map = value;
     return literal;
 }
 
@@ -415,6 +459,25 @@ void ast_match_destroy(struct ast_match *match)
     if (match->otherwise)
         ast_expr_destroy(match->otherwise);
     ash_free(match);
+}
+
+struct ast_hash *
+ast_hash_new(const char *key, struct ast_expr *expr)
+{
+    struct ast_hash *hash;
+    hash = ash_alloc(sizeof *hash);
+    hash->key = key;
+    hash->expr = expr;
+    return hash;
+}
+
+void ast_hash_destroy(struct ast_hash *hash)
+{
+    if (hash->key)
+        ash_free((char *)hash->key);
+    if (hash->expr)
+        ast_expr_destroy(hash->expr);
+    ash_free(hash);
 }
 
 struct ast_stm *
