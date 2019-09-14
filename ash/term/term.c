@@ -66,7 +66,7 @@ newline(const char *input)
     char *s;
 
     len = strlen(input);
-    s = ash_zalloc((len + 1));
+    s = ash_zalloc((len + 2));
     strcpy(s, input);
     s[len] = '\n';
     return s;
