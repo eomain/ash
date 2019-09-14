@@ -365,7 +365,7 @@ runtime_eval_array(struct ash_runtime_context *context,
 
     if (argc > 0) {
         struct ast_expr *expr = comp->expr;
-        vec = vec_new();
+        vec = vec_from(argc);
 
         for (size_t i = 0; i < argc; ++i) {
             vec_push(vec, runtime_eval_expr(context, expr));
@@ -854,7 +854,7 @@ runtime_command(struct ash_runtime_context *context, struct ast_command *command
 
     const char *s;
     struct vec *vec;
-    vec = vec_new();
+    vec = vec_from(command->length);
 
     do {
         if ((obj = runtime_eval_expr(context, expr))) {
@@ -870,10 +870,6 @@ runtime_command(struct ash_runtime_context *context, struct ast_command *command
 
     if (argc > 0)
         ash_exec_command(argc, argv, &renv);
-
-    /*while ((s = vec_pop(vec))) {
-
-    }*/
 
     vec_destroy(vec);
 }
