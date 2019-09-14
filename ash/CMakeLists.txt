@@ -20,7 +20,7 @@ set(
 	SRC_TYPE
 	"type/obj.c" "type/int.c" "type/bool.c"
 	"type/str.c" "type/range.c" "type/func.c"
-	"type/tuple.c"
+	"type/tuple.c" "type/map.c"
 )
 
 set(
