@@ -62,6 +62,7 @@ static struct ast_ternary *parser_ternary(struct parser *);
 static struct ast_match *parser_match(struct parser *);
 static struct ast_stm *parser_body_block(struct parser *);
 static struct ast_expr *parser_expr(struct parser *);
+static struct ast_expr *parser_expr_main(struct parser *);
 static struct ast_bool_expr *parser_bool_expr(struct parser *);
 static struct ast_composite *parser_args(struct parser *);
 static void parser_error_expec(struct parser *, enum ash_tk_type);
@@ -337,6 +338,54 @@ static struct ast_range *parser_range(struct parser *p, isize start)
     return range;
 }
 
+static struct ast_entry *parser_entry(struct parser *p)
+{
+    struct ast_entry *entry = NULL, *next = NULL;
+    struct ast_expr *expr = NULL;
+    const char *key;
+
+    for (;;) {
+        parser_assert(p, VAR_TK);
+        key = parser_get_str(p);
+        parser_assert_next(p, CN_TK);
+        parser_get_next(p);
+        expr = parser_expr_main(p);
+
+        if (parser_has_error(p)) {
+            /* TODO: free */
+            return NULL;
+        }
+
+        if (next) {
+            next->next = ast_entry_new(key, expr);
+            next = next->next;
+        } else if (!entry) {
+            if ((entry = ast_entry_new(key, expr)))
+                next = entry;
+        }
+
+        if (parser_get_next_type(p) != CO_TK)
+            break;
+
+        parser_get_next(p);
+    }
+
+    return entry;
+}
+
+static struct ast_map *parser_map(struct parser *p)
+{
+    struct ast_map *map;
+    struct ast_entry *entry = NULL;
+    parser_assert(p, LB_TK);
+
+    if (parser_get_next_type(p) != RB_TK)
+        entry = parser_entry(p);
+    parser_assert(p, RB_TK);
+    map = ast_map_new(entry);
+    return map;
+}
+
 static struct ast_param *parser_param(struct parser *p)
 {
     struct ast_param *param = NULL, *next = NULL;
@@ -432,6 +481,10 @@ static struct ast_literal *parser_literal(struct parser *p)
 
         case LP_TK:
             literal = ast_literal_tuple(parser_tuple(p));
+            break;
+
+        case LB_TK:
+            literal = ast_literal_map(parser_map(p));
             break;
 
         case PIP_TK:
@@ -652,8 +705,6 @@ static struct ast_while *parser_while(struct parser *p)
     return ast_while;
 }
 
-static struct ast_expr *parser_expr_main(struct parser *);
-
 static struct ast_for *parser_for(struct parser *p)
 {
     struct ast_for *ast_for = NULL;
@@ -741,6 +792,21 @@ static inline bool parser_is_scope(struct parser *p, enum ash_tk_type type)
            (type == VAR_TK && parser_check_next(p) == SCP_TK));
 }
 
+static struct ast_expr *parser_hash_expr(struct parser *p, struct ast_expr *expr)
+{
+    const char *key;
+    struct ast_hash *hash = NULL;
+
+    parser_assert_next(p, LS_TK);
+    parser_assert_next(p, VAR_TK);
+    key = parser_get_str(p);
+    parser_assert_next(p, RS_TK);
+
+    hash = ast_hash_new(key, expr);
+
+    return ast_expr_new(AST_EXPR_HASH, hash);
+}
+
 static struct ast_expr *parser_expr(struct parser *p)
 {
     struct ast_expr *expr = NULL;
@@ -770,6 +836,10 @@ static struct ast_expr *parser_expr(struct parser *p)
 
     if (parser_is_bin_ops(parser_check_next(p)))
         expr = parser_bin_expr(p, expr);
+    else if (parser_check_next(p) == LS_TK) {
+        while ((parser_check_next(p) == LS_TK))
+            expr = parser_hash_expr(p, expr);
+    }
 
     return expr;
 }
