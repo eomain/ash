@@ -34,6 +34,7 @@ struct ash_array {
 static struct ash_obj *
 array_add(struct ash_obj *a, struct ash_obj *b)
 {
+    size_t len;
     struct ash_obj *obj;
     struct ash_array *aa, *ba;
     struct vec *vec;
@@ -41,12 +42,47 @@ array_add(struct ash_obj *a, struct ash_obj *b)
     aa = (struct ash_array *)a;
     ba = (struct ash_array *)b;
     struct vec *array[] = { aa->vec, ba->vec };
-    vec = vec_new();
+    len = (vec_len(aa->vec) + vec_len(ba->vec));
+    vec = vec_from(len);
 
     for (size_t n = 0; n < array_length(array); ++n)
         vec_append(vec, array[n]);
 
     vec_for_each(vec, (void (*)(void *))ash_obj_inc_rc);
+
+    obj = ash_array_from(vec);
+    return obj;
+}
+
+static struct ash_obj *
+array_mul(struct ash_obj *a, struct ash_obj *b)
+{
+    size_t len_a, len_b;
+    struct ash_obj *obj, *oa, *ob, *value;
+    struct ash_array *aa, *ba;
+    struct vec *vec;
+    const struct ash_base_ops *ops;
+
+    aa = (struct ash_array *)a;
+    ba = (struct ash_array *)b;
+    len_a = vec_len(aa->vec);
+    len_b = vec_len(ba->vec);
+    vec = vec_from((len_a * len_b));
+
+    for (size_t y = 0; y < len_a; ++y) {
+        for (size_t x = 0; x < len_b; ++x) {
+            value = NULL;
+            oa = vec_get(aa->vec, y);
+            ob = vec_get(ba->vec, x);
+
+            if (oa && ob && ash_obj_type_eq(oa, ob)) {
+                if ((ops = ash_obj_get_ops(oa)) && ops->mul)
+                    value = ops->mul(oa, ob);
+            }
+
+            vec_push(vec, value);
+        }
+    }
 
     obj = ash_array_from(vec);
     return obj;
@@ -81,7 +117,8 @@ static void dealloc(struct ash_obj *obj)
 
 static struct ash_base base = {
     .ops = {
-        .add = array_add
+        .add = array_add,
+        .mul = array_mul
     },
 
 
