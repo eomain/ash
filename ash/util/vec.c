@@ -55,7 +55,7 @@ void vec_append(struct vec *vec, struct vec *v)
     size_t len = vec_len(v);
 
     for (size_t i = 0; i < len; ++i)
-        vec_push(vec, vec_get(v, i));
+        vec_push(vec, v->data[i]);
 }
 
 void *vec_get(struct vec *vec, size_t index)
