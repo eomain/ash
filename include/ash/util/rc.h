@@ -30,7 +30,7 @@ extern void *rc_get(struct rc *);
 extern const size_t rc_count(struct rc *);
 
 static inline struct rc *
-rc_from_obj(struct ash_obj *obj)
+rc_obj_new(struct ash_obj *obj)
 {
     struct rc *rc;
     rc = rc_new(obj, (void (*)(void *))ash_obj_destroy);
