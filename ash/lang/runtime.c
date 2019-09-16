@@ -246,17 +246,19 @@ runtime_eval_path(struct ash_runtime_context *context, struct ast_var *av,
     struct ash_module *module;
     struct ast_path *path;
     struct ast_scope *scope;
+    struct vec *vec;
+    const char **paths;
 
     path = av->path;
     scope = path->path;
-    const char *paths[path->length];
-
-    memset((char *)paths, 0, path->length * sizeof (char *));
+    vec = vec_from(path->length);
 
     for (size_t i = 0; i < path->length; ++i) {
-        paths[i] = scope->id;
+        vec_push(vec, (char *)scope->id);
         scope = scope->next;
     }
+
+    paths = (const char **) vec_get_ref(vec);
 
     struct ash_module_path mpath = {
         .type = path->type,
@@ -265,6 +267,7 @@ runtime_eval_path(struct ash_runtime_context *context, struct ast_var *av,
     };
 
     module = ash_module_path(runtime_context_module(context), &mpath);
+    vec_destroy(vec);
     return module;
 }
 
