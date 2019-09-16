@@ -98,7 +98,14 @@ static void ash_option_long(const char *s)
     ash_logout();
 }
 
-static void ash_option_short(char c)
+static void option_command(const char *command)
+{
+    struct input input;
+    input_text_init(&input, command);
+    ash_main_input(&input);
+}
+
+static void ash_option_short(struct queue *opt, char c)
 {
     struct ash_session *session;
     struct ash_session_profile *profile;
@@ -109,6 +116,11 @@ static void ash_option_short(char c)
     switch (c) {
         case 'b':
             ash_print_build();
+            ash_logout();
+            break;
+
+        case 'c':
+            option_command(queue_dequeue(opt));
             ash_logout();
             break;
 
@@ -205,7 +217,7 @@ option(struct queue *opt)
             if (o[1] == '-')
                 ash_option_long(&o[2]);
             else if (strlen(&o[1]) == 1)
-                ash_option_short(o[1]);
+                ash_option_short(opt, o[1]);
             else
                 ash_option_none();
 
