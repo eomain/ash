@@ -271,6 +271,16 @@ runtime_eval_path(struct ash_runtime_context *context, struct ast_var *av,
     return module;
 }
 
+static inline struct ash_module *
+runtime_eval_module(struct ash_runtime_context *context,
+                    struct ast_var *av, const char *id)
+{
+    if (av->path)
+        return runtime_eval_path(context, av, id);
+    else
+        return runtime_context_module(context);
+}
+
 static inline const char *
 runtime_eval_ref(struct ast_var *av)
 {
@@ -291,16 +301,13 @@ runtime_eval_var(struct ash_runtime_context *context, struct ast_var *av)
     struct ash_module *module;
 
     id = runtime_eval_ref(av);
-    if (av->path)
-        module = runtime_eval_path(context, av, id);
-    else
-        module = runtime_context_module(context);
+    module = runtime_eval_module(context, av, id);
 
     if (!av->path && (env = runtime_context_env(context)))
         var = ash_var_env_get(env, id);
 
     if (!var && module) {
-        if (!(var = ash_module_var_get(module, id)))
+        if (!(var = ash_module_var_get(module, id)) && !av->path)
             var = ash_module_var_get(ash_module_root(), id);
     }
 
@@ -321,10 +328,7 @@ runtime_eval_func(struct ash_runtime_context *context, struct ast_var *av,
     struct ash_runtime_env renv;
 
     id = runtime_eval_ref(av);
-    if (av->path)
-        module = runtime_eval_path(context, av, id);
-    else
-        module = runtime_context_module(context);
+    module = runtime_eval_module(context, av, id);
 
     if (!av->path && (env = runtime_context_env(context))) {
         if ((var = ash_var_env_func_get(env, id))) {
@@ -333,7 +337,7 @@ runtime_eval_func(struct ash_runtime_context *context, struct ast_var *av,
     }
 
     if (!var && module) {
-        if (!(var = ash_module_func_get(module, id)))
+        if (!(var = ash_module_func_get(module, id)) && !av->path)
             var = ash_module_func_get(ash_module_root(), id);
         runtime_env_init(&renv, module, NULL);
     }
