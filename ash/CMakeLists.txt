@@ -19,7 +19,7 @@ set(
 set(
 	SRC_UTIL
 	"util/map.c" "util/hash.c" "util/vec.c"
-	"util/strbuf.c" "util/queue.c"
+	"util/strbuf.c" "util/queue.c" "util/rc.c"
 )
 
 set(
