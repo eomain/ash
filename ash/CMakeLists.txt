@@ -2,6 +2,11 @@
 find_library(LIBEDIT edit)
 
 set(
+	SRC_CORE
+	"core/path.c"
+)
+
+set(
 	SRC_FS
 	"fs/io.c"
 )
@@ -14,7 +19,7 @@ set(
 set(
 	SRC_UTIL
 	"util/map.c" "util/hash.c" "util/vec.c"
-	"util/strbuf.c"
+	"util/strbuf.c" "util/queue.c"
 )
 
 set(
