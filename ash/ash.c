@@ -31,6 +31,8 @@
 #include "ash/type.h"
 #include "ash/var.h"
 #include "ash/lang/main.h"
+#include "ash/type/array.h"
+#include "ash/util/queue.h"
 #include "ash/util/vec.h"
 
 /* print the current ash version */
@@ -141,64 +143,34 @@ static void ash_option_short(char c)
     }
 }
 
-struct ash_option {
-    size_t pos;
-    size_t len;
-    const char **opts;
-};
-
-static void ash_option_init(struct ash_option *opt,
-                            size_t len, const char **opts)
+static struct ash_var *
+option_args(struct queue *opt, int argc)
 {
-    opt->pos = 0;
-    opt->len = len;
-    opt->opts = opts;
-}
-
-static const char *ash_option_get(struct ash_option *opt)
-{
-    size_t pos = opt->pos;
-    if (opt->opts && pos < opt->len) {
-        opt->pos++;
-        return opt->opts[pos];
-    }
-    return NULL;
-}
-
-static inline size_t ash_option_count(struct ash_option *opt)
-{
-    return (opt->len - opt->pos);
-}
-
-struct ash_var *ash_option_args(struct ash_option *opt, int argc)
-{
-    struct ash_obj *argv = NULL;
-    struct ash_obj **objs;
-    struct vec *vec;
-    vec = vec_new();
-
     const char *args;
+    struct ash_obj *argv = NULL;
+    struct vec *vec;
+
+    vec = vec_from(argc);
+
     for (size_t i = 0; i < argc; ++i) {
-        args = ash_strcpy(ash_option_get(opt));
+        args = ash_strcpy(queue_dequeue(opt));
         vec_push(vec, ash_str_from(args));
     }
 
-    objs = (struct ash_obj **) vec_get_ref(vec);
-    argv = ash_tuple_from(argc, objs);
-
-    vec_destroy(vec);
+    argv = ash_array_from(vec);
 
     return ash_var_set("@", argv);
 }
 
-void ash_option_script(struct ash_option *opt, const char *name)
+static void
+script(struct queue *opt, const char *name)
 {
+    size_t argc;
     struct ash_obj *args = NULL;
-    size_t argc = ash_option_count(opt);
 
-    if (argc > 0) {
+    if ((argc = queue_len(opt)) > 0) {
         struct ash_var *av;
-        av = ash_option_args(opt, argc);
+        av = option_args(opt, argc);
         args = ash_var_obj(av);
     }
 
@@ -220,10 +192,11 @@ void ash_option_script(struct ash_option *opt, const char *name)
     ash_script_close(script);
 }
 
-static int ash_option_iter(struct ash_option *opt)
+static void
+option(struct queue *opt)
 {
     const char *o;
-    while ((o = ash_option_get(opt))) {
+    while ((o = queue_dequeue(opt))) {
 
         if (!o[0])
             ash_option_none();
@@ -237,11 +210,10 @@ static int ash_option_iter(struct ash_option *opt)
                 ash_option_none();
 
         } else {
-            ash_option_script(opt, o);
+            script(opt, o);
             ash_logout();
         }
     }
-    return 0;
 }
 
 static void ash_print_greeter(void)
@@ -282,16 +254,19 @@ int main(int argc, const char *argv[])
     ash_set_static_var("ASH_MINOR", ASH_VERSION_MINOR);
     ash_set_static_var("ASH_MICRO", ASH_VERSION_MICRO);
 
-    size_t ac = (argc - 1);
-    const char **av = argv;
+    if (argc > 1) {
+        struct queue *opt;
+        opt = queue_from((argc - 1));
 
-    struct ash_option opt;
-    ash_option_init(&opt, ac, ++av);
+        for (size_t i = 1; i < argc; ++i)
+            queue_enqueue(opt, (char *)argv[i]);
 
-    if ((ash_option_iter(&opt)) == 0) {
-        ash_session_start(session);
-        ash_main();
+        option(opt);
+        queue_destroy(opt);
     }
+
+    ash_session_start(session);
+    ash_main();
 
     return EXIT_SUCCESS;
 }
