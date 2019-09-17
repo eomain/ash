@@ -852,12 +852,12 @@ static struct ast_expr *parser_expr(struct parser *p)
             expr = ast_expr_new(AST_EXPR_VALUE, value);
     }
 
-    if (parser_is_bin_ops(parser_check_next(p)))
-        expr = parser_bin_expr(p, expr);
-    else if (parser_check_next(p) == LS_TK) {
+    if (parser_check_next(p) == LS_TK) {
         while ((parser_check_next(p) == LS_TK))
             expr = parser_hash_expr(p, expr);
     }
+    if (parser_is_bin_ops(parser_check_next(p)))
+        expr = parser_bin_expr(p, expr);
 
     return expr;
 }
