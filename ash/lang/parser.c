@@ -437,10 +437,12 @@ static struct ast_function *parser_closure(struct parser *p)
     if (parser_get_next_type(p) != PIP_TK)
         param = parser_param(p);
     parser_assert(p, PIP_TK);
+    parser_fblock_inc(p);
 
     if (parser_get_next_type(p) != END_TK)
         stm = parser_body_block(p);
     parser_assert(p, END_TK);
+    parser_fblock_dec(p);
 
     return ast_function_new(NULL, param, stm);
 }
