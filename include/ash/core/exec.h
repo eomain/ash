@@ -24,7 +24,7 @@
 #include "ash/var.h"
 #include "ash/util/vec.h"
 
-#define ASH_SYMBOL_EXIT "__EXIT__"
+#define ASH_SYMBOL_EXIT "__STATUS__"
 #define ASH_SYMBOL_RESULT "__RESULT__"
 
 extern const struct ash_unit_module ash_module_exec;

@@ -340,7 +340,7 @@ mod env
     # Args(0):
     # Return: Int
     def status()
-        return $__EXIT__;
+        return $__STATUS__;
     end
 
     # Returns the result of the last built-in command.
