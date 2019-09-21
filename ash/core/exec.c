@@ -44,14 +44,12 @@
     #include <unistd.h>
 #endif
 
-#define ASH_STDIN  0
-#define ASH_STDOUT 1
+#define ASH_FD_STDIN  0
+#define ASH_FD_STDOUT 1
 
-#define ASH_EXIT_DEFAULT 0
 #define ASH_EXIT_SUCCESS EXIT_SUCCESS
 #define ASH_EXIT_FAILURE EXIT_FAILURE
-
-#define ASH_DEFAULT_DIR_MAX 100
+#define ASH_EXIT_DEFAULT ASH_EXIT_SUCCESS
 
 struct ash_exec_env {
     struct ash_obj *exit;
@@ -96,46 +94,59 @@ static void ash_print_err_command(const char *command, const char *msg)
     ash_print(PNAME ": %s: %s \n", command, msg);
 }
 
-static int
+static inline void
 ash_exec_child(int input, int output,
                const char *prog, char *const argv[])
 {
-    pid_t pid;
+    if (input != ASH_FD_STDIN) {
+        dup2(input, ASH_FD_STDIN);
+        close(input);
+    }
+
+    if (output != ASH_FD_STDOUT) {
+        dup2(output, ASH_FD_STDOUT);
+        close(output);
+    }
+
+    if (execvp(prog, argv) == -1) {
+        const char *msg = (errno == ENOENT) ?
+            "Unrecognized command": strerror(errno);
+        ash_print_err_command(prog, msg);
+    }
+    _exit(0);
+}
+
+static inline int
+ash_exec_wait(const char *prog)
+{
     int status;
+    wait(&status);
+    if (WIFSIGNALED(status))
+        ash_print("%s %s\n", ash_signal_get(WTERMSIG(status)), prog);
+
+    status = WEXITSTATUS(status);
+    ash_exec_env_result(&env, NULL);
+    ash_exec_env_exit(&env, status);
+    return status;
+}
+
+static int
+ash_exec_process(int input, int output,
+               const char *prog, char *const argv[])
+{
+    pid_t pid;
+    int status = ASH_EXIT_DEFAULT;
 
     pid = fork();
     if (pid == -1) {
         ash_print_err("unable to fork process!");
         return -1;
-    }
-    else if (pid == 0) {
-
-        if (input != ASH_STDIN) {
-            dup2(input, ASH_STDIN);
-            close(input);
-        }
-
-        if (output != ASH_STDOUT) {
-            dup2(output, ASH_STDOUT);
-            close(output);
-        }
-
-        if (execvp(prog, argv) == -1) {
-            const char *msg = (errno == ENOENT) ?
-                "Unrecognized command": strerror(errno);
-            ash_print_err_command(prog, msg);
-        }
-        _exit(0);
-    }
-    else {
-        wait(&status);
-        if (WIFSIGNALED(status))
-            ash_print("%s %s\n", ash_signal_get(WTERMSIG(status)), argv[0]);
+    } else if (pid == 0) {
+        ash_exec_child(input, output, prog, argv);
+    } else {
+        status = ash_exec_wait(argv[0]);
     }
 
-    status = WEXITSTATUS(status);
-    ash_exec_env_result(&env, NULL);
-    ash_exec_env_exit(&env, status);
     return status;
 }
 
@@ -155,17 +166,17 @@ ash_exec_builtin(int input, int output,
     enum ash_exec_io io = ASH_STDIO;
     struct ash_command_env env;
 
-    if (input != ASH_STDIN) {
-        in = dup(ASH_STDIN);
+    if (input != ASH_FD_STDIN) {
+        in = dup(ASH_FD_STDIN);
         io |= ASH_IN;
-        dup2(input, ASH_STDIN);
+        dup2(input, ASH_FD_STDIN);
         close(input);
     }
 
-    if (output != ASH_STDOUT) {
-        out = dup(ASH_STDOUT);
+    if (output != ASH_FD_STDOUT) {
+        out = dup(ASH_FD_STDOUT);
         io |= ASH_OUT;
-        dup2(output, ASH_STDOUT);
+        dup2(output, ASH_FD_STDOUT);
         close(output);
     }
 
@@ -175,10 +186,10 @@ ash_exec_builtin(int input, int output,
     );
 
     if (io & ASH_IN)
-        dup2(in, ASH_STDIN);
+        dup2(in, ASH_FD_STDIN);
 
     if (io & ASH_OUT)
-        dup2(out, ASH_STDOUT);
+        dup2(out, ASH_FD_STDOUT);
 
     return status;
 }
@@ -186,7 +197,7 @@ ash_exec_builtin(int input, int output,
 int ash_exec_pipeline(int len, struct ash_exec **progs)
 {
     int fd[2];
-    int input = ASH_STDIN;
+    int input = ASH_FD_STDIN;
     int argc;
     const char *prog = NULL;
     char *const *argv = NULL;
@@ -209,7 +220,7 @@ int ash_exec_pipeline(int len, struct ash_exec **progs)
                 argc = progs[i]->argc;
                 ash_exec_builtin(input, fd[1], command, argc, argv);
             } else {
-                ash_exec_child(input, fd[1], prog, argv);
+                ash_exec_process(input, fd[1], prog, argv);
             }
 
             close(fd[1]);
@@ -225,9 +236,9 @@ int ash_exec_pipeline(int len, struct ash_exec **progs)
 
     if ((command = ash_command_find(prog)) != ASH_ERR_COMMAND) {
         argc = progs[index]->argc;
-        return ash_exec_builtin(input, ASH_STDOUT, command, argc, argv);
+        return ash_exec_builtin(input, ASH_FD_STDOUT, command, argc, argv);
     } else
-        return ash_exec_child(input, ASH_STDOUT, prog, argv);
+        return ash_exec_process(input, ASH_FD_STDOUT, prog, argv);
 }
 
 void ash_exec_command_status(int status, struct ash_command_env *cenv)
@@ -262,7 +273,7 @@ int ash_exec_command(struct vec *vec, struct ash_runtime_env *renv)
     } else {
         vec_push(vec, NULL);
         argv = (const char **) vec_get_ref(vec);
-        status = ash_exec_child(ASH_STDIN, ASH_STDOUT,
+        status = ash_exec_process(ASH_FD_STDIN, ASH_FD_STDOUT,
                                 name, (char *const*)argv);
     }
 
