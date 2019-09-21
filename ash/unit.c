@@ -18,11 +18,11 @@
 
 #include "ash/alias.h"
 #include "ash/env.h"
-#include "ash/exec.h"
 #include "ash/io.h"
 #include "ash/module.h"
 #include "ash/signal.h"
 #include "ash/unit.h"
+#include "ash/core/exec.h"
 #include "ash/ffi/ffi.h"
 
 static const struct ash_unit_module * const unit[] = {

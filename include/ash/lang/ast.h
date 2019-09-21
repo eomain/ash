@@ -18,11 +18,11 @@
 #define ASH_LANG_AST_H
 
 #include "ash/bool.h"
-#include "ash/exec.h"
 #include "ash/int.h"
 #include "ash/module.h"
 #include "ash/obj.h"
 #include "ash/var.h"
+#include "ash/core/exec.h"
 #include "ash/lang/lang.h"
 
 struct ast_scope {

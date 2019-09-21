@@ -14,8 +14,8 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_EXEC_H
-#define ASH_EXEC_H
+#ifndef ASH_CORE_EXEC_H
+#define ASH_CORE_EXEC_H
 
 #include "ash/ash.h"
 #include "ash/obj.h"
@@ -53,9 +53,6 @@ struct ash_exec_command {
 };
 
 extern int ash_exec_pipeline(int, struct ash_exec **);
-
-extern const char *ash_exec_usage(void);
-extern int ash_exec(int, const char * const *);
 
 struct ash_runtime_env;
 

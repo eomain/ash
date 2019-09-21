@@ -22,7 +22,6 @@
 
 #include "ash/ash.h"
 #include "ash/env.h"
-#include "ash/exec.h"
 #include "ash/io.h"
 #include "ash/int.h"
 #include "ash/macro.h"
