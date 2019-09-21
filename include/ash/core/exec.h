@@ -47,6 +47,11 @@ struct ash_exec {
     enum ash_exec_redirect redirect;
 };
 
+struct ash_exec_command {
+    struct ash_vec *argv;
+    enum ash_exec_redirect redirect;
+};
+
 extern int ash_exec_pipeline(int, struct ash_exec **);
 
 extern const char *ash_exec_usage(void);

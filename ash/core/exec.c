@@ -36,6 +36,7 @@
 #include "ash/unit.h"
 #include "ash/var.h"
 #include "ash/lang/runtime.h"
+#include "ash/util/vec.h"
 
 #ifdef ASH_PLATFORM_POSIX
     #include <sys/types.h>
