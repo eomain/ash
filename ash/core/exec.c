@@ -53,38 +53,6 @@
 
 #define ASH_DEFAULT_DIR_MAX 100
 
-
-const char *ash_exec_usage(void)
-{
-    return "execute command";
-}
-
-int ash_exec(int argc, const char * const *argv)
-{
-    if (argc == 1)
-        return ASH_STATUS_OK;
-    else if (argc > 1) {
-        const char *prog = argv[1];
-
-        if (argc == 2) {
-            char * const args[] = { (char *const) prog, NULL };
-            if (execvp(prog, args))
-                return ASH_STATUS_ERR;
-        } else {
-            const char *args[argc];
-            args[argc - 1] = NULL;
-
-            for (int i = 0; i < argc - 1; ++i)
-                args[i] = argv[i + 1];
-
-            if (execvp(prog, (char *const *)args))
-                return ASH_STATUS_ERR;
-        }
-    }
-
-    return ASH_STATUS_OK;
-}
-
 struct ash_exec_env {
     struct ash_obj *exit;
     struct ash_var *vexit;
