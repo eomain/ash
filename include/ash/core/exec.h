@@ -46,10 +46,8 @@ struct ash_exec_seq {
     enum ash_exec_redirect redirect;
 };
 
-extern int ash_exec_pipeline(struct vec *);
-
 struct ash_runtime_env;
-
+extern int ash_exec_pipeline(struct vec *, struct ash_runtime_env *);
 extern int ash_exec_command(struct vec *, struct ash_runtime_env *);
 extern int ash_exec_set_path(void);
 
