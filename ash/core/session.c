@@ -17,10 +17,59 @@
 #include <stdlib.h>
 
 #include "ash/env.h"
+#include "ash/bool.h"
+#include "ash/int.h"
+#include "ash/obj.h"
 #include "ash/script.h"
 #include "ash/session.h"
+#include "ash/str.h"
 #include "ash/type.h"
 #include "ash/unit.h"
+#include "ash/var.h"
+#include "ash/type/map.h"
+
+#define USER "USER"
+#define ROOT_UID 0
+
+#ifdef ASH_PLATFORM_POSIX
+    #include <pwd.h>
+    #include <unistd.h>
+#endif
+
+struct user {
+    auid uid;
+    auid euid;
+    bool root;
+    const char *name;
+};
+
+static void
+user_init(struct user *user)
+{
+    struct passwd *pass;
+    pass = getpwent();
+
+    user->uid = getuid();
+    user->euid = geteuid();
+    user->root = (user->euid == ROOT_UID);
+    user->name = pass->pw_name;
+
+    endpwent();
+}
+
+static void
+user_var(struct user *user)
+{
+    struct ash_obj *obj;
+    obj = ash_map_new();
+
+    ash_map_insert(obj, "uid",  ash_int_from((isize) user->uid));
+    ash_map_insert(obj, "euid", ash_int_from((isize) user->euid));
+    ash_map_insert(obj, "root", ash_bool_from(user->root));
+    ash_map_insert(obj, "name", ash_str_from(user->name));
+
+    ash_var_set(USER, obj);
+}
 
 static inline bool
 ash_session_meta_login(struct ash_session_meta *meta)
@@ -64,12 +113,11 @@ ash_session_profile_shutdown(struct ash_session_profile *session)
 
 struct ash_session {
     bool login;
-    bool root;
     bool entry;
     bool script;
     int status;
-    auid uid;
     apid pid;
+    struct user user;
     struct ash_session_profile profile;
 };
 
@@ -79,12 +127,12 @@ void ash_session_init(struct ash_session *session,
                       struct ash_session_meta *meta)
 {
     session->login = ash_session_meta_login(meta);
-    session->root = ash_env_root();
     session->entry = false;
     session->status = 0;
     session->script = false;
-    session->uid = ash_env_uid();
-    session->pid = ash_env_pid();
+    session->pid = getpid();
+    user_init(&session->user);
+    user_var(&session->user);
     ash_session_profile_init(&session->profile);
 }
 
