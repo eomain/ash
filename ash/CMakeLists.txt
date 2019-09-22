@@ -3,12 +3,15 @@ find_library(LIBEDIT edit)
 
 set(
 	SRC_CORE
-	"core/path.c"
+	"core/ash.c" "core/io.c" "core/unit.c"
+	"core/path.c" "core/exec.c" "core/var.c"
+	"core/module.c" "core/session.c" "core/command.c"
+	"core/env.c" "core/signal.c"
 )
 
 set(
 	SRC_FS
-	"fs/io.c"
+	"fs/script.c"
 )
 
 set(
@@ -40,15 +43,21 @@ set(
 	"term/term.c"
 )
 
-add_executable("ash" ash.c io.c env.c var.c builtin.c
-	   mem.c script.c exec.c echo.c
-	   cd.c sleep.c unset.c ops.c source.c
-	   read.c exit.c export.c typeof.c
-	   iter.c defined.c command.c rand.c
-	   signal.c help.c session.c unit.c history.c
-	   alias.c module.c
+set(
+	SRC_COMMAND
+	"exec.c" "echo.c" "cd.c"
+	"sleep.c" "unset.c" "source.c"
+	"read.c" "exit.c" "export.c"
+	"typeof.c" "defined.c" "rand.c"
+	"help.c" "history.c" "alias.c"
+	"builtin.c"
+)
+
+add_executable("ash"
+	   mem.c ops.c
+	   iter.c
 	   ${SRC_LANG} ${SRC_TYPE} ${SRC_TERM} ${SRC_FFI}
-	   ${SRC_UTIL})
+	   ${SRC_FS} ${SRC_UTIL} ${SRC_CORE} ${SRC_COMMAND})
 
 target_compile_options("ash" PRIVATE "-Wreturn-type" "-g")
 
