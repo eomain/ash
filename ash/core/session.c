@@ -38,6 +38,7 @@
 
 struct user {
     auid uid;
+    agid gid;
     auid euid;
     bool root;
     const char *name;
@@ -50,6 +51,7 @@ user_init(struct user *user)
     pass = getpwent();
 
     user->uid = getuid();
+    user->gid = getgid();
     user->euid = geteuid();
     user->root = (user->euid == ROOT_UID);
     user->name = pass->pw_name;
@@ -64,6 +66,7 @@ user_var(struct user *user)
     obj = ash_map_new();
 
     ash_map_insert(obj, "uid",  ash_int_from((isize) user->uid));
+    ash_map_insert(obj, "gid",  ash_int_from((isize) user->gid));
     ash_map_insert(obj, "euid", ash_int_from((isize) user->euid));
     ash_map_insert(obj, "root", ash_bool_from(user->root));
     ash_map_insert(obj, "name", ash_str_from(user->name));

@@ -39,6 +39,7 @@ extern const struct ash_unit_module ash_module_env;
     #define ASH_PATH_DELIM "/"
 
     typedef uid_t auid;
+    typedef gid_t agid;
     typedef pid_t apid;
 #endif
 
