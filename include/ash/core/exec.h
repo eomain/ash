@@ -41,18 +41,12 @@ enum ash_exec_redirect {
     ASH_PIPE
 };
 
-struct ash_exec {
-    int argc;
-    char *const *argv;
+struct ash_exec_seq {
+    struct vec *argv;
     enum ash_exec_redirect redirect;
 };
 
-struct ash_exec_command {
-    struct ash_vec *argv;
-    enum ash_exec_redirect redirect;
-};
-
-extern int ash_exec_pipeline(int, struct ash_exec **);
+extern int ash_exec_pipeline(struct vec *);
 
 struct ash_runtime_env;
 

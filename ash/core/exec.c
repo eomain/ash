@@ -110,7 +110,7 @@ ash_exec_child(int input, int output,
 
     if (execvp(prog, argv) == -1) {
         const char *msg = (errno == ENOENT) ?
-            "Unrecognized command": strerror(errno);
+            "unrecognized command": strerror(errno);
         ash_print_err_command(prog, msg);
     }
     _exit(0);
@@ -194,15 +194,18 @@ ash_exec_builtin(int input, int output,
     return status;
 }
 
-int ash_exec_pipeline(int len, struct ash_exec **progs)
+int ash_exec_pipeline(struct vec *seq)
 {
     int fd[2];
     int input = ASH_FD_STDIN;
     int argc;
+    size_t len;
     const char *prog = NULL;
     char *const *argv = NULL;
-
+    struct ash_exec_seq *eseq;
     enum ash_command_name command;
+
+    len = vec_len(seq);
 
     if (len > 1) {
         for (int i = 0; i < len - 1; ++i) {
@@ -211,13 +214,14 @@ int ash_exec_pipeline(int len, struct ash_exec **progs)
                 return -1;
             }
 
-            prog = progs[i]->argv[0];
-            argv = progs[i]->argv;
+            eseq = vec_get(seq, i);
+            prog = vec_get(eseq->argv, 0);
+            argv = (char *const *) vec_get_ref(eseq->argv);
 
             command = ash_command_find(prog);
 
             if (ash_command_valid(command)) {
-                argc = progs[i]->argc;
+                argc = vec_len(eseq->argv);
                 ash_exec_builtin(input, fd[1], command, argc, argv);
             } else {
                 ash_exec_process(input, fd[1], prog, argv);
@@ -231,11 +235,12 @@ int ash_exec_pipeline(int len, struct ash_exec **progs)
 
     const int index = len -1;
 
-    prog = progs[index]->argv[0];
-    argv = progs[index]->argv;
+    eseq = vec_get(seq, index);
+    prog = vec_get(eseq->argv, 0);
+    argv = (char *const *) vec_get_ref(eseq->argv);
 
     if ((command = ash_command_find(prog)) != ASH_ERR_COMMAND) {
-        argc = progs[index]->argc;
+        argc = vec_len(eseq->argv);
         return ash_exec_builtin(input, ASH_FD_STDOUT, command, argc, argv);
     } else
         return ash_exec_process(input, ASH_FD_STDOUT, prog, argv);
