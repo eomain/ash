@@ -19,7 +19,7 @@
 
 def fact(n)
     return match [ $n ]
-        1 => $n,
+        0, 1 => 1,
         _ => `$n * fact($n - 1)`
     end;
 end

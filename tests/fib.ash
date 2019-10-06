@@ -19,7 +19,7 @@
 
 def fib(n)
     return match [ $n ]
-        0, 1 => 1,
+        0, 1 => $n,
         _ => `fib($n - 1) + fib($n - 2)`
     end;
 end
