@@ -228,15 +228,27 @@ option(struct queue *opt)
     }
 }
 
-static void ash_print_greeter(void)
-{
-    ash_print("ash: %s %s\n", ASH_NAME, ASH_VERSION);
-    ash_print("usage: help <command>\n");
-}
-
 void ash_print_help(void)
 {
-    ash_print_greeter();
+    ash_print("ash: %s\n", ASH_VERSION);
+    ash_print("%s\n", ASH_NAME);
+    ash_print("\n");
+    ash_print("usage:\n");
+    ash_print("    ash [FLAGS] [OPTIONS] [INPUT]\n");
+    ash_print("\n");
+    ash_print("FLAGS:\n");
+    ash_print("    -b, --build        Print build info\n");
+    ash_print("    -e                 Begin execution from `main` function\n");
+    ash_print("    -p                 Do not read profile\n");
+    ash_print("    -s                 Silent output\n");
+    ash_print("    -h, --help         Print this message\n");
+    ash_print("    -v, --version      Print version info\n");
+    ash_print("\n");
+    ash_print("OPTIONS:\n");
+    ash_print("    -c <COMMAND>       Execute a command\n");
+    ash_print("\n");
+    ash_print("INPUT:\n");
+    ash_print("    <SCRIPT>           Shell script to execute\n");
 }
 
 static void ash_set_static_var(const char *id, const char *str)
