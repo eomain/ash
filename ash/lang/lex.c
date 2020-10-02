@@ -437,6 +437,8 @@ static void lex_symbol_default(struct lexer *lexer, enum ash_tk_type type)
     else if (type == NUM_TK) {
         while (lex_is_numeric(lexer_read(lexer)))
             lexer_readnext(lexer);
+        if (lex_token_type(lexer_read(lexer)) == VAR_TK)
+            return lex_symbol_var(lexer, VAR_TK);
         lexer_token_add_string(lexer, NUM_TK, lexer_get_string(lexer));
     }
     else if (type == DQT_TK) {

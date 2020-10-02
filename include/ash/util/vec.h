@@ -19,7 +19,7 @@
 
 #include <stddef.h>
 
-struct vec *vec;
+struct vec;
 
 extern struct vec *vec_from(size_t);
 extern struct vec *vec_new(void);

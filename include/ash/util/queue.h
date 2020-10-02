@@ -19,7 +19,7 @@
 
 #include <stddef.h>
 
-struct queue *queue;
+struct queue;
 
 extern struct queue *queue_from(size_t);
 extern struct queue *queue_new(void);
