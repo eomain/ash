@@ -236,7 +236,7 @@ void ash_print_help(void)
     ash_print("%s\n", ASH_NAME);
     ash_print("\n");
     ash_print("usage:\n");
-    ash_print("    ash [FLAGS] [OPTIONS] <INPUT>\n");
+    ash_print("    ash [FLAGS] [OPTIONS] [INPUT]\n");
     ash_print("\n");
     ash_print("FLAGS:\n");
     ash_print("    -b, --build        Print build info\n");

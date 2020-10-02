@@ -100,6 +100,7 @@ void ash_session_shutdown(struct ash_session *session)
 {
     if (!session->script)
         ash_session_profile_shutdown(&session->profile);
+    ash_unit_destroy();
     exit(session->status);
 }
 
