@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 #include "ash/bool.h"
 #include "ash/func.h"
@@ -23,6 +24,7 @@
 #include "ash/iter.h"
 #include "ash/macro.h"
 #include "ash/obj.h"
+#include "ash/str.h"
 #include "ash/tuple.h"
 #include "ash/type.h"
 #include "ash/unit.h"
@@ -61,6 +63,18 @@ ffi_args_get(struct ash_obj *args, size_t pos)
     return ash_tuple_get(args, pos);
 }
 
+static struct ash_obj *env(struct ash_obj *args)
+{
+    if (ffi_args_len(args) == 0)
+        return ash_str_from("");
+    const char *name;
+    if (!(name = ash_str_get(ffi_args_get(args, 0))))
+        return ash_str_from("");
+    if (!(name = getenv(name)))
+        return ash_str_from("");
+    return ash_str_from(name);
+}
+
 static struct ash_obj *len(struct ash_obj *args)
 {
     size_t argc;
@@ -85,6 +99,12 @@ static struct ash_obj *len(struct ash_obj *args)
 }
 
 static struct ash_ffi_function functions[] = {
+    {
+        .name = "env",
+        .function = env,
+        .anonymous = false,
+    },
+
     {
         .name = "len",
         .function = len,
