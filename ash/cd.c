@@ -27,9 +27,15 @@
     #include <unistd.h>
 #endif
 
+static const char *USAGE =
+    "cd:\n"
+    "    change directory\n"
+    "usage:\n"
+    "    cd [DIRECTORY]\n";
+
 const char *ash_cd_usage(void)
 {
-    return "change directory";
+    return USAGE;
 }
 
 static int ash_chdir(const char *pname, const char *dir)

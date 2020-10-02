@@ -40,7 +40,7 @@ set(
 	"term/term.c"
 )
 
-add_executable("ash" ash.c io.c env.c var.c builtin.c
+add_executable("ash" ash.c io.c env.c var.c list.c
 	   mem.c script.c exec.c echo.c
 	   cd.c sleep.c unset.c ops.c source.c
 	   read.c exit.c export.c typeof.c

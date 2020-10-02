@@ -24,9 +24,15 @@
 #include "ash/var.h"
 #include "ash/lang/runtime.h"
 
+static const char *USAGE =
+    "typeof:\n"
+    "    display the type of a variable\n"
+    "usage:\n"
+    "    typeof [VARIABLE]...\n";
+
 const char *ash_typeof_usage(void)
 {
-    return "display the type of a variable";
+    return USAGE;
 }
 
 static int ash_typeof_match(struct ash_obj *);

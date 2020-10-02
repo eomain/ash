@@ -33,9 +33,19 @@ enum export_flag_option {
     GLOBAL   = 1 << 1
 };
 
+static const char *USAGE =
+    "export:\n"
+    "    export an enviornment variable\n"
+    "usage:\n"
+    "    export [FLAGS]... [NAME=VALUE]...\n"
+    "\n"
+    "FLAGS:\n"
+    "    -d                 Override existing variable if present\n"
+    "    -g                 Set as a shell global variable\n";
+
 const char *ash_export_usage(void)
 {
-    return "export an enviornment variable";
+    return USAGE;
 }
 
 static ash_flag ash_export_option(const char *s)

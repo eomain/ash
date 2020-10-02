@@ -21,17 +21,39 @@
 #include <string.h>
 
 #include "ash/ash.h"
-#include "ash/builtin.h"
 #include "ash/command.h"
 #include "ash/env.h"
 #include "ash/io.h"
+#include "ash/list.h"
 
-const char *ash_builtin_usage(void)
+static const char *USAGE =
+    "list:\n"
+    "    list built-in commands\n"
+    "usage:\n"
+    "    list [COMMAND]\n";
+
+const char *ash_list_usage(void)
 {
-    return "display built-in commands";
+    return USAGE;
 }
 
-int ash_builtin(int argc, const char * const *argv)
+int ash_list(int argc, const char * const *argv)
 {
-    return 0;
+    if (argc == 1) {
+        enum ash_command_name command;
+        for (size_t i = 0; i < ASH_COMMAND_NO; i++) {
+            command = (enum ash_command_name) i;
+            ash_print("%s\n", ash_command_name(command));
+        }
+        return ASH_STATUS_OK;
+    }
+
+    enum ash_command_name cmd;
+    cmd = ash_command_find(argv[1]);
+    if (!ash_command_valid(cmd))
+        return ASH_STATUS_ERR;
+
+    ash_command_usage(cmd);
+
+    return ASH_STATUS_OK;
 }

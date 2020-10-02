@@ -52,10 +52,15 @@
 
 #define ASH_DEFAULT_DIR_MAX 100
 
+static const char *USAGE =
+    "exec:\n"
+    "    execute command\n"
+    "usage:\n"
+    "    exec [COMMAND [ARGS]...]\n";
 
 const char *ash_exec_usage(void)
 {
-    return "execute command";
+    return USAGE;
 }
 
 int ash_exec(int argc, const char * const *argv)

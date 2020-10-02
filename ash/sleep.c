@@ -25,9 +25,15 @@
     #include <unistd.h>
 #endif
 
+static const char *USAGE =
+    "sleep:\n"
+    "    put the shell to sleep for the specified time in microseconds\n"
+    "usage:\n"
+    "    sleep [SECS]\n";
+
 const char *ash_sleep_usage(void)
 {
-    return "put the program to sleep for `n` microseconds";
+    return USAGE;
 }
 
 int ash_sleep(int argc, const char * const *argv)

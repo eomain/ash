@@ -22,7 +22,6 @@
 
 #include "ash/alias.h"
 #include "ash/ash.h"
-#include "ash/builtin.h"
 #include "ash/command.h"
 #include "ash/cd.h"
 #include "ash/defined.h"
@@ -34,6 +33,7 @@
 #include "ash/help.h"
 #include "ash/history.h"
 #include "ash/io.h"
+#include "ash/list.h"
 #include "ash/ops.h"
 #include "ash/rand.h"
 #include "ash/read.h"
@@ -62,19 +62,12 @@ static struct ash_command commands[ ASH_COMMAND_NO ] = {
         .usage   = ash_alias_usage
     },
 
-    [ ASH_COMMAND_ASSERT ] = {
+    /*[ ASH_COMMAND_ASSERT ] = {
         .command = ASH_COMMAND_ASSERT,
         .name    = "assert",
         .main    = NULL,
         .usage   = NULL
-    },
-
-    [ ASH_COMMAND_BUILTIN ] = {
-        .command = ASH_COMMAND_BUILTIN,
-        .name    = "builtin",
-        .main    = ash_builtin,
-        .usage   = ash_builtin_usage
-    },
+    },*/
 
     [ ASH_COMMAND_CD ] = {
         .command = ASH_COMMAND_CD,
@@ -132,6 +125,13 @@ static struct ash_command commands[ ASH_COMMAND_NO ] = {
         .name    = "history",
         .main    = ash_history,
         .usage   = ash_history_usage
+    },
+
+    [ ASH_COMMAND_LIST ] = {
+        .command = ASH_COMMAND_LIST,
+        .name    = "list",
+        .main    = ash_list,
+        .usage   = ash_list_usage
     },
 
     [ ASH_COMMAND_RAND ] = {
@@ -198,15 +198,16 @@ int ash_command_exec(enum ash_command_name command,
     return status;
 }
 
+const char *ash_command_name(enum ash_command_name command)
+{
+    return commands[command].name;
+}
+
 void ash_command_usage(enum ash_command_name command)
 {
     assert(command < ASH_COMMAND_NO);
     if (commands[command].usage) {
-        ash_print(
-            "%s - %s.\n",
-            commands[command].name,
-            commands[command].usage()
-        );
+        ash_print("%s",commands[command].usage());
     }
 }
 
@@ -220,17 +221,6 @@ enum ash_command_name ash_command_find(const char *v)
                 v[4] == 's' &&
                 !v[5])
                 return ASH_COMMAND_ALIAS;
-            break;
-
-        case 'b':
-            if (v[1] == 'u' &&
-                v[2] == 'i' &&
-                v[3] == 'l' &&
-                v[4] == 't' &&
-                v[5] == 'i' &&
-                v[6] == 'n' &&
-                !(v[7]))
-                return ASH_COMMAND_BUILTIN;
             break;
 
         case 'c':
@@ -290,6 +280,13 @@ enum ash_command_name ash_command_find(const char *v)
                      v[6] == 'y' &&
                      !v[7])
                 return ASH_COMMAND_HISTORY;
+            break;
+
+        case 'l':
+            if (v[1] == 'i' &&
+                v[2] == 's' &&
+                v[3] == 't')
+                return ASH_COMMAND_LIST;
             break;
 
         case 'r':

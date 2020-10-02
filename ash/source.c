@@ -19,9 +19,15 @@
 #include "ash/script.h"
 #include "ash/source.h"
 
+static const char *USAGE =
+    "source:\n"
+    "    read and execute shell script from file\n"
+    "usage:\n"
+    "    source [INPUT]...\n";
+
 const char *ash_source_usage(void)
 {
-    return "read and execute commands from file";
+    return USAGE;
 }
 
 int ash_source_env(int argc, const char * const *argv,

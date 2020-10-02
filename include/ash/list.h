@@ -14,10 +14,10 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef ASH_BUILTIN_H
-#define ASH_BUILTIN_H
+#ifndef ASH_LIST_H
+#define ASH_LIST_H
 
-extern const char *ash_builtin_usage(void);
-extern int ash_builtin(int, const char * const *);
+extern const char *ash_list_usage(void);
+extern int ash_list(int, const char * const *);
 
 #endif

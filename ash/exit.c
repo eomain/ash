@@ -21,9 +21,15 @@
 #include "ash/ops.h"
 #include "ash/session.h"
 
+static const char *USAGE =
+    "exit:\n"
+    "    exit shell session\n"
+    "usage:\n"
+    "    exit [STATUS]\n";
+
 const char *ash_exit_usage(void)
 {
-    return "exit shell session";
+    return USAGE;
 }
 
 static inline int exit_status(const char *s)
