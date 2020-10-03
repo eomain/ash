@@ -24,6 +24,7 @@
 #include "ash/iter.h"
 #include "ash/macro.h"
 #include "ash/obj.h"
+#include "ash/script.h"
 #include "ash/str.h"
 #include "ash/tuple.h"
 #include "ash/type.h"
@@ -98,6 +99,28 @@ static struct ash_obj *len(struct ash_obj *args)
     return ret;
 }
 
+static struct ash_obj *load(struct ash_obj *args)
+{
+    if (ffi_args_len(args) > 0) {
+        const char *script;
+        struct ash_obj *obj;
+        struct ash_iter iter;
+        ash_iter_init(&iter, args);
+
+        while ((ash_iter_hasnext(&iter))) {
+            obj = ash_iter_next(&iter);
+            if (!(script = ash_str_get(obj))) {
+                ash_obj_inc_rc(obj);
+                return obj;
+            }
+            if (ash_script_load(script, false) == -1)
+                return ash_str_from(script);
+        }
+    }
+
+    return ash_bool_from(true);
+}
+
 static struct ash_ffi_function functions[] = {
     {
         .name = "env",
@@ -108,6 +131,12 @@ static struct ash_ffi_function functions[] = {
     {
         .name = "len",
         .function = len,
+        .anonymous = false
+    },
+
+    {
+        .name = "load",
+        .function = load,
         .anonymous = false
     }
 };

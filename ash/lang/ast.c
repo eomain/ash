@@ -101,6 +101,7 @@ struct ast_entry *ast_entry_new(const char *key, struct ast_expr *expr)
     entry = ash_alloc(sizeof *entry);
     entry->key = key;
     entry->expr = expr;
+    entry->next = NULL;
     return entry;
 }
 
