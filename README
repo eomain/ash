@@ -27,7 +27,7 @@ Basic usage:
         help
 
     # to list builtin commands
-        builtin
+        list
 
     # to change directory
         cd <directory>

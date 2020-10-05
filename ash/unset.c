@@ -19,9 +19,15 @@
 #include "ash/unset.h"
 #include "ash/var.h"
 
+static const char *USAGE =
+    "unset:\n"
+    "    unset shell variable\n"
+    "usage:\n"
+    "    unset [VARIABLE]...\n";
+
 const char *ash_unset_usage(void)
 {
-    return "unset variable";
+    return USAGE;
 }
 
 int ash_unset_env(int argc, const char * const *argv,

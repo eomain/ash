@@ -14,24 +14,10 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <assert.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#ifndef ASH_LIST_H
+#define ASH_LIST_H
 
-#include "ash/ash.h"
-#include "ash/builtin.h"
-#include "ash/command.h"
-#include "ash/env.h"
-#include "ash/io.h"
+extern const char *ash_list_usage(void);
+extern int ash_list(int, const char * const *);
 
-const char *ash_builtin_usage(void)
-{
-    return "display built-in commands";
-}
-
-int ash_builtin(int argc, const char * const *argv)
-{
-    return 0;
-}
+#endif

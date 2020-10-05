@@ -50,8 +50,7 @@ ash_command_env_get_result(struct ash_command_env *env)
 enum ash_command_name {
     ASH_ERR_COMMAND = -1,
     ASH_COMMAND_ALIAS,
-    ASH_COMMAND_ASSERT,
-    ASH_COMMAND_BUILTIN,
+    //ASH_COMMAND_ASSERT,
     ASH_COMMAND_CD,
     ASH_COMMAND_DEFINED,
     ASH_COMMAND_ECHO,
@@ -60,6 +59,7 @@ enum ash_command_name {
     ASH_COMMAND_EXPORT,
     ASH_COMMAND_HELP,
     ASH_COMMAND_HISTORY,
+    ASH_COMMAND_LIST,
     ASH_COMMAND_RAND,
     ASH_COMMAND_READ,
     ASH_COMMAND_SLEEP,
@@ -82,6 +82,7 @@ ash_command_exec(enum ash_command_name,
                  int, const char *const *,
                  struct ash_command_env *);
 
+extern const char *ash_command_name(enum ash_command_name);
 extern void ash_command_usage(enum ash_command_name);
 
 extern enum ash_command_name ash_command_find(const char *);

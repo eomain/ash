@@ -22,9 +22,18 @@ enum history_flag_option {
     CLEAR = 1 << 0
 };
 
+static const char *USAGE =
+    "history:\n"
+    "    manipulate the shell history\n"
+    "usage:\n"
+    "    history [FLAGS]\n"
+    "\n"
+    "FLAGS:\n"
+    "    -c                 Clear history\n";
+
 const char *ash_history_usage(void)
 {
-    return "manipulate the shell history";
+    return USAGE;
 }
 
 static ash_flag ash_history_option(const char *s)

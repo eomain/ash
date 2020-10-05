@@ -24,9 +24,15 @@
 #include "ash/var.h"
 #include "ash/lang/runtime.h"
 
+static const char *USAGE =
+    "defined:\n"
+    "    check if a variable is defined\n"
+    "usage:\n"
+    "    defined [VARIABLE]...\n";
+
 const char *ash_defined_usage(void)
 {
-    return "check if a variable is defined";
+    return USAGE;
 }
 
 int ash_defined_env(int argc, const char * const *argv,

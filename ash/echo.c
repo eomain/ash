@@ -29,9 +29,20 @@ enum echo_flag_option {
     FORMAT = 1 << 2
 };
 
+static const char *USAGE =
+    "echo:\n"
+    "    print formatted string to standard out\n"
+    "usage:\n"
+    "    echo [FLAGS]... [STRING]...\n"
+    "\n"
+    "FLAGS:\n"
+    "    -n                 Append trailing newline character\n"
+    "    -s                 Include spaces between string arguments\n"
+    "    -f                 Treat as a format string\n";
+
 const char *ash_echo_usage(void)
 {
-    return "print formatted string to standard out";
+    return USAGE;
 }
 
 static ash_flag ash_echo_option(const char *s)

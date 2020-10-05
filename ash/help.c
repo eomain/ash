@@ -18,9 +18,15 @@
 #include "ash/command.h"
 #include "ash/help.h"
 
+static const char *USAGE =
+    "help:\n"
+    "    display built-in command usage\n"
+    "usage:\n"
+    "    help [COMMAND]\n";
+
 const char *ash_help_usage(void)
 {
-    return "display command usage";
+    return USAGE;
 }
 
 int ash_help(int argc, const char * const *argv)

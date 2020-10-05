@@ -50,7 +50,7 @@ set(
 	"read.c" "exit.c" "export.c"
 	"typeof.c" "defined.c" "rand.c"
 	"help.c" "history.c" "alias.c"
-	"builtin.c"
+	"list.c"
 )
 
 add_executable("ash"

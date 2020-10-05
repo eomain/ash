@@ -22,9 +22,15 @@
 #include "ash/obj.h"
 #include "ash/rand.h"
 
+static const char *USAGE =
+    "rand:\n"
+    "    generate a random number\n"
+    "usage:\n"
+    "    rand\n";
+
 const char *ash_rand_usage(void)
 {
-    return "generate a random number";
+    return USAGE;
 }
 
 int ash_rand_env(int argc, const char * const *argv,
@@ -34,6 +40,7 @@ int ash_rand_env(int argc, const char * const *argv,
     static int last;
     int r, n;
 
+    n = rand();
     srand(time(NULL) + (last  * ((last << 2) & n)));
     r = rand();
     last = r;

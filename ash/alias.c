@@ -26,9 +26,15 @@
 
 #define ALIAS_SIZE 1024
 
+static const char *USAGE =
+    "alias:\n"
+    "    assign a new name to a command\n"
+    "usage:\n"
+    "    alias <COMMAND> <NAME>\n";
+
 const char *ash_alias_usage(void)
 {
-    return "assign a new name to a command";
+    return USAGE;
 }
 
 int ash_alias(int argc, const char * const *argv)

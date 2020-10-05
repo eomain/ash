@@ -108,6 +108,7 @@ ash_obj_bool(struct ash_obj *obj)
     if (obj && obj->base) {
         if (obj->base->into.boolean)
             return obj->base->into.boolean(obj);
+        return ash_bool_from(true);
     }
     return NULL;
 }

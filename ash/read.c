@@ -28,9 +28,18 @@
 
 #define MAX_INPUT_SIZE 2048
 
+static const char *USAGE =
+    "read:\n"
+    "    read from standard input\n"
+    "usage:\n"
+    "    read [OPTIONS] [VARIABLE]\n"
+    "\n"
+    "OPTIONS:\n"
+    "    -p <PROMPT>         Display as prompt\n";
+
 const char *ash_read_usage(void)
 {
-    return "read from standard input";
+    return USAGE;
 }
 
 static int ash_read_input(const char *var, const char *prompt,

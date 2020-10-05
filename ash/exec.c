@@ -32,10 +32,24 @@
     #include <unistd.h>
 #endif
 
+#define ASH_STDIN  0
+#define ASH_STDOUT 1
+
+#define ASH_EXIT_DEFAULT 0
+#define ASH_EXIT_SUCCESS EXIT_SUCCESS
+#define ASH_EXIT_FAILURE EXIT_FAILURE
+
+#define ASH_DEFAULT_DIR_MAX 100
+
+static const char *USAGE =
+    "exec:\n"
+    "    execute command\n"
+    "usage:\n"
+    "    exec [COMMAND [ARGS]...]\n";
 
 const char *ash_exec_usage(void)
 {
-    return "execute command";
+    return USAGE;
 }
 
 int ash_exec(int argc, const char * const *argv)

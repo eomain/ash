@@ -18,7 +18,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ash/alias.h"
 #include "ash/ash.h"
+#include "ash/command.h"
 #include "ash/env.h"
 #include "ash/int.h"
 #include "ash/io.h"
@@ -228,15 +230,37 @@ option(struct queue *opt)
     }
 }
 
-static void ash_print_greeter(void)
-{
-    ash_print("ash: %s %s\n", ASH_NAME, ASH_VERSION);
-    ash_print("usage: help <command>\n");
-}
-
 void ash_print_help(void)
 {
-    ash_print_greeter();
+    ash_print("ash: %s\n", ASH_VERSION);
+    ash_print("%s\n", ASH_NAME);
+    ash_print("\n");
+    ash_print("usage:\n");
+    ash_print("    ash [FLAGS] [OPTIONS] [INPUT]\n");
+    ash_print("\n");
+    ash_print("FLAGS:\n");
+    ash_print("    -b, --build        Print build info\n");
+    ash_print("    -e                 Begin execution from `main` function\n");
+    ash_print("    -p                 Do not read profile\n");
+    ash_print("    -s                 Silent output\n");
+    ash_print("    -h, --help         Print this message\n");
+    ash_print("    -v, --version      Print version info\n");
+    ash_print("\n");
+    ash_print("OPTIONS:\n");
+    ash_print("    -c <COMMAND>       Execute a command\n");
+    ash_print("\n");
+    ash_print("INPUT:\n");
+    ash_print("    <SCRIPT>           Shell script to execute\n");
+    ash_print("\n");
+    ash_print("SHELL COMMANDS:\n");
+
+    enum ash_command_name command;
+    for (size_t i = 0; i < ASH_COMMAND_NO -1; i++) {
+        command = (enum ash_command_name) i;
+        ash_command_usage(command);
+        ash_print("\n\n");
+    }
+    ash_command_usage(++command);
 }
 
 static void ash_set_static_var(const char *id, const char *str)

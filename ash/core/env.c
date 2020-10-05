@@ -302,6 +302,7 @@ void ash_env_pwd(void)
     pwd = getcwd(pwd, pwd_size);
     ash_env_set_var(ASH_ENV_PWD, pwd);
     ash_env_dir();
+    setenv(ASH_ENV_PWD, pwd, 1);
 }
 
 void ash_env_dir(void)
