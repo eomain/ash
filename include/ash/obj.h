@@ -80,6 +80,7 @@ struct ash_obj {
 };
 
 extern void ash_obj_init(struct ash_obj *, struct ash_base *);
+extern void ash_obj_destroy(struct ash_obj *);
 extern struct ash_obj *ash_obj_ref(struct ash_obj *);
 extern const struct ash_base *ash_obj_get_base(struct ash_obj *);
 extern const struct ash_base_ops *ash_obj_get_ops(struct ash_obj *);

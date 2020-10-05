@@ -54,7 +54,7 @@ ash_obj_init(struct ash_obj *obj, struct ash_base *base)
     obj->string = NULL;
 }
 
-static void ash_obj_destroy(struct ash_obj *obj)
+void ash_obj_destroy(struct ash_obj *obj)
 {
     assert(obj != NULL);
     if (obj->string)
