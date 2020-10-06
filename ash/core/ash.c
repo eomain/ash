@@ -251,16 +251,6 @@ void ash_print_help(void)
     ash_print("\n");
     ash_print("INPUT:\n");
     ash_print("    <SCRIPT>           Shell script to execute\n");
-    ash_print("\n");
-    ash_print("SHELL COMMANDS:\n");
-
-    enum ash_command_name command;
-    for (size_t i = 0; i < ASH_COMMAND_NO -1; i++) {
-        command = (enum ash_command_name) i;
-        ash_command_usage(command);
-        ash_print("\n\n");
-    }
-    ash_command_usage(++command);
 }
 
 static void ash_set_static_var(const char *id, const char *str)

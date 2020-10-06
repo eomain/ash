@@ -20,9 +20,9 @@
 
 static const char *USAGE =
     "help:\n"
-    "    display built-in command usage\n"
+    "    display help message\n"
     "usage:\n"
-    "    help [COMMAND]\n";
+    "    help\n";
 
 const char *ash_help_usage(void)
 {
@@ -31,17 +31,6 @@ const char *ash_help_usage(void)
 
 int ash_help(int argc, const char * const *argv)
 {
-    if (argc == 1) {
-        ash_print_help();
-        return ASH_STATUS_OK;
-    }
-
-    enum ash_command_name command;
-    command = ash_command_find(argv[1]);
-    if (!ash_command_valid(command))
-        return ASH_STATUS_ERR;
-
-    ash_command_usage(command);
-
+    ash_print_help();
     return ASH_STATUS_OK;
 }
