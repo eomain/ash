@@ -116,7 +116,7 @@ ash_exec_env_init(struct ash_exec_env *env)
 
 static void ash_print_err_command(const char *command, const char *msg)
 {
-    ash_print(PNAME ": %s: %s \n", command, msg);
+    ash_print(PNAME ": '%s': %s \n", command, msg);
 }
 
 static inline void
@@ -134,7 +134,7 @@ ash_exec_child(struct proc *proc)
 
     if (execvp(proc->name, proc->argv) == -1) {
         const char *msg = (errno == ENOENT) ?
-            "unrecognized command": strerror(errno);
+            "command not found!": strerror(errno);
         ash_print_err_command(proc->name, msg);
     }
     _exit(0);
