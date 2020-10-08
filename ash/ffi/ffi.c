@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 #include "ash/bool.h"
+#include "ash/env.h"
 #include "ash/func.h"
 #include "ash/int.h"
 #include "ash/iter.h"
@@ -31,6 +32,10 @@
 #include "ash/unit.h"
 #include "ash/var.h"
 #include "ash/ffi/ffi.h"
+
+#ifdef ASH_PLATFORM_POSIX
+    #include <unistd.h>
+#endif
 
 struct ash_ffi_function {
     const char *name;
@@ -74,6 +79,24 @@ static struct ash_obj *env(struct ash_obj *args)
     if (!(name = getenv(name)))
         return ash_str_from("");
     return ash_str_from(name);
+}
+
+static struct ash_obj *exists(struct ash_obj *args)
+{
+	if (ffi_args_len(args) == 0)
+		return ash_bool_from(false);
+	
+	const char *path;
+	struct ash_obj *obj;
+	obj = ffi_args_get(args, 0);
+	if (!(path = ash_str_get(obj)))
+		return ash_bool_from(false);
+	
+#ifdef ASH_PLATFORM_POSIX
+	if (access(path, F_OK) == 0)
+		return ash_bool_from(true);
+#endif
+	return ash_bool_from(false);
 }
 
 static struct ash_obj *len(struct ash_obj *args)
@@ -125,7 +148,13 @@ static struct ash_ffi_function functions[] = {
     {
         .name = "env",
         .function = env,
-        .anonymous = false,
+        .anonymous = false
+    },
+    
+    {
+    	.name = "exists",
+    	.function = exists,
+    	.anonymous = false
     },
 
     {
