@@ -18,7 +18,10 @@
 #define ASH_STR_H
 
 #include "ash/obj.h"
+#include "ash/ops.h"
 #include "ash/type.h"
+
+#define ash_str_clone_from(s) ash_str_from(ash_strcpy(s))
 
 extern struct ash_obj *ash_str_new(void);
 extern void ash_str_set(struct ash_obj *, const char *);

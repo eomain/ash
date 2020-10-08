@@ -72,13 +72,13 @@ ffi_args_get(struct ash_obj *args, size_t pos)
 static struct ash_obj *env(struct ash_obj *args)
 {
     if (ffi_args_len(args) == 0)
-        return ash_str_from("");
+        return ash_str_clone_from("");
     const char *name;
     if (!(name = ash_str_get(ffi_args_get(args, 0))))
-        return ash_str_from("");
+        return ash_str_clone_from("");
     if (!(name = getenv(name)))
-        return ash_str_from("");
-    return ash_str_from(name);
+        return ash_str_clone_from("");
+    return ash_str_clone_from(name);
 }
 
 static struct ash_obj *exists(struct ash_obj *args)
@@ -137,11 +137,23 @@ static struct ash_obj *load(struct ash_obj *args)
                 return obj;
             }
             if (ash_script_load(script, false) == -1)
-                return ash_str_from(script);
+                return ash_str_clone_from(script);
         }
     }
 
     return ash_bool_from(true);
+}
+
+static struct ash_obj *type(struct ash_obj *args)
+{
+	if (ffi_args_len(args) == 0)
+		return ash_str_clone_from("");
+	const char *name;
+	struct ash_obj *obj;
+	obj = ffi_args_get(args, 0);
+	if (!obj || !(name = ash_obj_name(obj)))
+		return ash_str_clone_from("");
+	return ash_str_clone_from(name);
 }
 
 static struct ash_ffi_function functions[] = {
@@ -167,6 +179,12 @@ static struct ash_ffi_function functions[] = {
         .name = "load",
         .function = load,
         .anonymous = false
+    },
+    
+    {
+    	.name = "type",
+    	.function = type,
+    	.anonymous = false
     }
 };
 
