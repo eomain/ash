@@ -155,6 +155,25 @@ struct ash_obj *ash_array_get(struct ash_obj *obj, size_t index)
     return NULL;
 }
 
+struct ash_obj *ash_array_pop(struct ash_obj *obj)
+{
+    if (ash_base_derived(&base, obj)) {
+        struct ash_array *array;
+        array = (struct ash_array *) obj;
+        return vec_pop(array->vec);
+    }
+    return NULL;
+}
+
+void ash_array_push(struct ash_obj *obj, struct ash_obj *value)
+{
+    if (ash_base_derived(&base, obj)) {
+        struct ash_array *array;
+        array = (struct ash_array *) obj;
+        vec_push(array->vec, value);
+    }
+}
+
 size_t ash_array_len(struct ash_obj *obj)
 {
     if (ash_base_derived(&base, obj)) {

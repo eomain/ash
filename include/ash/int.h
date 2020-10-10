@@ -21,6 +21,7 @@
 #include "ash/obj.h"
 #include "ash/type.h"
 
+extern struct ash_base *ash_int_base(void);
 extern struct ash_obj *ash_int_new(void);
 extern void ash_int_set(struct ash_obj *, isize);
 extern isize ash_int_get(struct ash_obj *);

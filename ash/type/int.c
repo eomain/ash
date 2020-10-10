@@ -208,6 +208,11 @@ static struct ash_base base = {
     .name = name
 };
 
+struct ash_base *ash_int_base(void)
+{
+    return &base;
+}
+
 struct ash_obj *ash_int_new(void)
 {
     struct ash_int *ai;

@@ -364,7 +364,7 @@ runtime_eval_array(struct ash_runtime_context *context,
                    struct ast_composite *comp)
 {
     if (!comp)
-        return NULL;
+        return ash_array_from(vec_new());
 
     struct vec *vec;
     size_t argc = comp->length;
@@ -390,7 +390,7 @@ runtime_eval_tuple(struct ash_runtime_context *context,
                    struct ast_composite *tuple)
 {
     if (!tuple)
-        return NULL;
+        return ash_tuple_new();
 
     size_t argc = tuple->length;
     struct ash_obj *obj = NULL;

@@ -25,6 +25,8 @@
 
 extern struct ash_obj *ash_array_from(struct vec *);
 extern struct ash_obj *ash_array_get(struct ash_obj *, size_t);
+extern struct ash_obj *ash_array_pop(struct ash_obj *);
+extern void ash_array_push(struct ash_obj *, struct ash_obj *);
 extern size_t ash_array_len(struct ash_obj *);
 
 #endif
